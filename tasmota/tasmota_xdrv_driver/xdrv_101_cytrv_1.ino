@@ -24,7 +24,8 @@
 
 #include <Wire.h>
 #include "INA219_WE.h"
-#define I2C_ADDRESS 0x40
+#include "WEMOS_Motor.h"
+#define XDRV_101_I2C_ADDRESS 0x40
 
 /* There are several ways to create your INA219 object:
    INA219_WE ina219 = INA219_WE(); -> uses Wire / I2C Address = 0x40
@@ -32,19 +33,56 @@
    INA219_WE ina219 = INA219_WE(&Wire); -> you can pass any TwoWire object
    INA219_WE ina219 = INA219_WE(&Wire, I2C_ADDRESS); -> all together
 */
-INA219_WE ina219 = INA219_WE(I2C_ADDRESS);
+INA219_WE ina219 = INA219_WE(XDRV_101_I2C_ADDRESS);
+
+struct XDRV_101_INA219{
+  float shuntVoltage_mV = 0.0;
+  float loadVoltage_V = 0.0;
+  float busVoltage_V = 0.0;
+  float current_mA = 0.0;
+  float power_mW = 0.0;
+  bool ina219_overflow = false;
+
+  float max_curr = 50;
+} XDRV_101_ina219;
+
+struct XDRV_101_MQTT{
+  boolean log_mqtt;
+  boolean pub_sens;
+  int dest_pos_mqtt;
+  boolean cal_mqtt;
+} XDRV_101_mqtt;
+
+struct XDRV_101_STATE{
+  unsigned long State_millis;
+
+  unsigned long  dest_millis;
+  unsigned long  old_millis;
+
+  int state;
+  int state_old;
+  int max_time;
+  int pos_time;
+
+} XDRV_101_state;
 
 
-float shuntVoltage_mV = 0.0;
-float loadVoltage_V = 0.0;
-float busVoltage_V = 0.0;
-float current_mA = 0.0;
-float power_mW = 0.0;
-bool ina219_overflow = false;
+  //Motor shield I2C Address: 0x30
+  //PWM frequency: 1000Hz(1kHz)
+  //Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
+  Motor Ventil(0x30, _MOTOR_B, 1000); //Motor B
 
-float gv_max_curr = 50;
+struct XDRV_101_MOTOR{
+  int pwm;
 
+  boolean run = false;
+  boolean dir = false;
 
+  int act_pos;
+  int dest_pos;
+  int old_pos;
+
+} XDRV_101_motor;
 
 /*********************************************************************************************\
  * My IoT Device Functions
@@ -130,6 +168,63 @@ return true;
 
 }
 
+
+void check_ina219( ) {
+
+  XDRV_101_ina219.shuntVoltage_mV = ina219.getShuntVoltage_mV();
+  XDRV_101_ina219.busVoltage_V = ina219.getBusVoltage_V();
+  XDRV_101_ina219.current_mA = ina219.getCurrent_mA();
+  XDRV_101_ina219.power_mW = ina219.getBusPower();
+  XDRV_101_ina219.loadVoltage_V  = XDRV_101_ina219.busVoltage_V + (XDRV_101_ina219.shuntVoltage_mV / 1000);
+  XDRV_101_ina219.ina219_overflow = ina219.getOverflow();
+
+  //  Serial.print("Shunt Voltage [mV]: "); Serial.println(shuntVoltage_mV);
+  //  Serial.print("Bus Voltage [V]: "); Serial.println(busVoltage_V);
+  //  Serial.print("Load Voltage [V]: ");
+  //  Serial.print(loadVoltage_V);
+  //  Serial.print(" ");
+  //  Serial.print("Current[mA]: ");
+  //  Serial.print(current_mA);
+  //  Serial.print(" ");
+  //  // Serial.print("Bus Power [mW]: "); Serial.println(power_mW);
+  //  if (!ina219_overflow) {
+  //    Serial.println("Values OK - no overflow");
+  //  }
+  //  else {
+  //    Serial.println("Overflow! Choose higher PGAIN");
+  //  }
+  //Serial.println();
+}
+
+void print_ina219() {
+  if ( XDRV_101_mqtt.log_mqtt == false) {
+    return;
+  }
+  
+  // Serial.print("Load Voltage [V]: ");
+  // Serial.print(loadVoltage_V);
+  // Serial.print(" ");
+  // Serial.print("Current[mA]: ");
+  // Serial.print(current_mA);
+  // Serial.print(" ");
+  // Serial.print("Bus Power [mW]: "); Serial.println(power_mW);
+  if (!XDRV_101_ina219.ina219_overflow) {
+    //Serial.println("Values OK - no overflow");
+  }
+  else {
+    //Serial.println("Overflow! Choose higher PGAIN");
+  }
+}
+
+
+void state_motor_stop() {
+  Ventil.setmotor(_STOP);
+  XDRV_101_motor.run = false;
+  XDRV_101_state.state = 1;
+  XDRV_101_mqtt.pub_sens = true;
+  check_ina219( );
+}
+
 const char MyProjectCommands[] PROGMEM = "|"  // No Prefix
   "Say_Hello|" 
   "SendMQTT|"
@@ -185,7 +280,7 @@ void MyProjectInit()
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
 
   //Serial.begin(115200);
-init_ina219();
+  init_ina219();
 
   // Set initSuccess at the very end of the init process
   // Init is successful
@@ -195,13 +290,142 @@ init_ina219();
 
 
 
-void MyProjectProcessing(void)
+void Xdrv_101_check_state(void)
 {
 
   /*
     Here goes My Project code.
     Usually this part is included into loop() function
   */
+
+   XDRV_101_state.state_old = XDRV_101_state.state;
+
+  if (XDRV_101_state.state != 1) {
+    check_ina219( );
+  }
+
+  switch (XDRV_101_state.state) {
+    case 0: //do stop
+      state_motor_stop();
+      break;
+    case 1: // stopped
+      if (XDRV_101_state.state == 1) {
+        if ( XDRV_101_mqtt.dest_pos_mqtt != -1 ) {
+          XDRV_101_motor.dest_pos = XDRV_101_mqtt.dest_pos_mqtt;
+          XDRV_101_state.state = 6;
+          XDRV_101_mqtt.dest_pos_mqtt = -1;
+        }
+      }
+
+      if (XDRV_101_state.state == 1) {
+        if ( XDRV_101_mqtt.cal_mqtt == true ) {
+          XDRV_101_state.state = 2; // calibration
+          XDRV_101_mqtt.cal_mqtt = false;
+        }
+      }
+      break;
+    case 2: // do calibration
+      XDRV_101_motor.act_pos = -1;
+      Ventil.setmotor(_CW, 100);
+      XDRV_101_motor.dir = true;
+      XDRV_101_motor.run = true;
+      XDRV_101_state.state = 3;
+    case 3: // calibration opening
+      if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr) {
+        Ventil.setmotor(_STOP);
+        XDRV_101_motor.run = false;
+        XDRV_101_state.state = 4;
+      }
+      break;
+    case 4: // do calibration close
+      Ventil.setmotor(_CCW, 100);
+      XDRV_101_motor.dir = false;
+      XDRV_101_motor.run = true;
+      XDRV_101_state.max_time = 0;
+      XDRV_101_state.state = 5;
+
+      break;
+
+    case 5: // calibration closing
+      if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr) {
+        state_motor_stop();
+        XDRV_101_motor.act_pos = 0;
+        Serial.print("Max time: ");
+        Serial.println(XDRV_101_state.max_time);
+      }
+      break;
+    case 6: // do positioning
+      if (XDRV_101_motor.act_pos == XDRV_101_motor.dest_pos) {
+        XDRV_101_state.state = 1;
+        break;
+      }
+
+      XDRV_101_motor.old_pos = XDRV_101_motor.act_pos;
+
+      if (XDRV_101_motor.act_pos > XDRV_101_motor.dest_pos) {
+        // millis für neue Position errechnen
+        int lv_diff_pos = XDRV_101_motor.act_pos - XDRV_101_motor.dest_pos;
+        int lv_diff_millis = (( XDRV_101_state.max_time * 1000 ) / 100 ) * lv_diff_pos;
+        XDRV_101_state.old_millis = millis();
+        XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
+
+        Ventil.setmotor(_CCW, 100);
+        XDRV_101_motor.dir = false;
+        XDRV_101_motor.run = true;
+        XDRV_101_state.state = 7;
+      } else {
+        // millis für neue Position errechnen
+        int lv_diff_pos = XDRV_101_motor.dest_pos - XDRV_101_motor.act_pos;
+        int lv_diff_millis = (( XDRV_101_state.max_time * 1000 ) / 100 ) * lv_diff_pos;
+        XDRV_101_state.old_millis = millis();
+        XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
+
+        Ventil.setmotor(_CW, 100);
+        XDRV_101_motor.dir = true;
+        XDRV_101_motor.run = true;
+        XDRV_101_state.state = 8;
+      }
+      //gv_pos_time = gv_max_time - map(gv_dest_pos, 0, 100, gv_max_time, 0);
+      break;
+    case 7: // go to position closing
+      if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr) {
+        state_motor_stop();
+        XDRV_101_motor.act_pos = 0;
+        break;
+      }
+
+      // aktuelle Position berechnen
+      XDRV_101_motor.act_pos = XDRV_101_motor.old_pos - (( 100 * ( millis() - XDRV_101_state.old_millis ) ) / ( XDRV_101_state.max_time * 1000 ) );
+
+      if (XDRV_101_motor.act_pos <= XDRV_101_motor.dest_pos) {
+        state_motor_stop();
+        break;
+      }
+      break;
+    case 8: // go to position opening
+      if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr) {
+        state_motor_stop();
+        XDRV_101_motor.act_pos = 100;
+
+        break;
+      }
+
+      // aktuelle Position berechnen
+      XDRV_101_motor.act_pos = XDRV_101_motor.old_pos + (( 100 * ( millis() - XDRV_101_state.old_millis ) ) / ( XDRV_101_state.max_time * 1000 ) );
+
+      if (XDRV_101_motor.act_pos >= XDRV_101_motor.dest_pos) {
+        state_motor_stop();
+        break;
+      }
+      break;
+  }
+
+  // Serial.println();
+
+  if (XDRV_101_state.state_old != XDRV_101_state.state) {
+    XDRV_101_mqtt.pub_sens = true;
+  }
+
 
 }
 
@@ -228,10 +452,12 @@ bool Xdrv101(uint32_t function)
     switch (function) {
       // Select suitable interval for polling your function
 //    case FUNC_EVERY_SECOND:
-      case FUNC_EVERY_250_MSECOND:
+//      case FUNC_EVERY_250_MSECOND:
 //    case FUNC_EVERY_200_MSECOND:
 //    case FUNC_EVERY_100_MSECOND:
-        MyProjectProcessing();
+    case FUNC_EVERY_50_MSECOND:
+        //MyProjectProcessing();
+        Xdrv_101_check_state();
         break;
 
       // Command support
