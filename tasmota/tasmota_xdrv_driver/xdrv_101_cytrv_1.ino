@@ -169,7 +169,7 @@ bool init_ina219() {
   */
   // ina219.setShuntVoltOffset_mV(0.5); // insert the shunt voltage (millivolts) you detect at zero current
 
-return true;
+  return true;
 
 }
 
@@ -230,6 +230,19 @@ void state_motor_stop() {
   check_ina219( );
 }
 
+void init_state() {
+  XDRV_101_state.state = 0;
+  XDRV_101_state.max_time = 46;
+  //set_state_tact();
+}
+
+
+void motor_stop_all() {
+  Ventil.setmotor(_STOP);
+  XDRV_101_motor.run = false;
+}
+
+
 const char MyProjectCommands[] PROGMEM = "|"  // No Prefix
   "Say_Hello|" 
   "SendMQTT|"
@@ -273,7 +286,7 @@ void CmdHelp(void) {
 
 
 
-void MyProjectInit()
+void XDRV_101_Init()
 {
 
   /*
@@ -285,7 +298,17 @@ void MyProjectInit()
   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
 
   //Serial.begin(115200);
+
+  motor_stop_all();
+
+  //init_window();
+
   init_ina219();
+
+  init_state();
+
+  XDRV_101_motor.dest_pos = 0;
+  XDRV_101_state.state = 6;
 
   // Set initSuccess at the very end of the init process
   // Init is successful
@@ -449,7 +472,7 @@ bool Xdrv101(uint32_t function)
   bool result = false;
 
   if (FUNC_INIT == function) {
-    MyProjectInit();
+    XDRV_101_Init();
     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My project init is done..."));
   }
   else if (initSuccess) {
