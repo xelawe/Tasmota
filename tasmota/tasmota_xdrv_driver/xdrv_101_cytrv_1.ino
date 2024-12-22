@@ -46,12 +46,16 @@ struct XDRV_101_INA219{
   float max_curr = 50;
 } XDRV_101_ina219;
 
+// MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 struct XDRV_101_MQTT{
   boolean log_mqtt;
   boolean pub_sens;
   int dest_pos_mqtt;
   boolean cal_mqtt;
 } XDRV_101_mqtt;
+
+// State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 struct XDRV_101_STATE{
   unsigned long State_millis;
@@ -66,6 +70,7 @@ struct XDRV_101_STATE{
 
 } XDRV_101_state;
 
+// Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
   //Motor shield I2C Address: 0x30
   //PWM frequency: 1000Hz(1kHz)
