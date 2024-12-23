@@ -526,7 +526,7 @@ void XDRV_101_show(bool json)
   if (json)
   {
     ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-                     name, INA219_ADDRESSES[i], voltage, current, power);
+                     name, XDRV_101_I2C_ADDRESS, voltage, current, power);
 #ifdef USE_DOMOTICZ
     if (0 == TasmotaGlobal.tele_period)
     {
