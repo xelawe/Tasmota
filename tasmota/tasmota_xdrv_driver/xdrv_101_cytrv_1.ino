@@ -34,6 +34,7 @@
    INA219_WE ina219 = INA219_WE(&Wire, I2C_ADDRESS); -> all together
 */
 INA219_WE ina219 = INA219_WE(XDRV_101_I2C_ADDRESS);
+const char *XDRV_101_INA219_TYPE[] = { "INA219", "ISL28022" };
 
 struct XDRV_101_INA219
 {
@@ -46,6 +47,13 @@ struct XDRV_101_INA219
 
   float max_curr = 50;
 } XDRV_101_ina219;
+
+#ifdef USE_WEBSERVER
+const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
+    "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+    "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
+#endif // USE_WEBSERVER
 
 // MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -78,7 +86,7 @@ struct XDRV_101_STATE
 // Motor shield I2C Address: 0x30
 // PWM frequency: 1000Hz(1kHz)
 // Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
-Motor Ventil(0x30, _MOTOR_B, 1000); // Motor B
+Motor XDRV_101_Ventil(0x30, _MOTOR_B, 1000); // Motor B
 
 struct XDRV_101_MOTOR
 {
@@ -98,7 +106,7 @@ struct XDRV_101_MOTOR
 \*********************************************************************************************/
 
 // This variable will be set to true after initialization
-bool initSuccess = false;
+bool XDRV_101_initSuccess = false;
 
 /*
   Optional: if you need to pass any command for your device
@@ -233,7 +241,7 @@ void Xdrv_101_print_ina219()
 
 void Xdrv_101_state_motor_stop()
 {
-  Ventil.setmotor(_STOP);
+  XDRV_101_Ventil.setmotor(_STOP);
   XDRV_101_motor.run = false;
   XDRV_101_state.state = 1;
   XDRV_101_mqtt.pub_sens = true;
@@ -247,9 +255,9 @@ void Xdrv_101_init_state()
   // set_state_tact();
 }
 
-void motor_stop_all()
+void XDRV_101_motor_stop_all()
 {
-  Ventil.setmotor(_STOP);
+  XDRV_101_Ventil.setmotor(_STOP);
   XDRV_101_motor.run = false;
 }
 
@@ -308,7 +316,7 @@ void XDRV_101_Init()
 
   // Serial.begin(115200);
 
-  motor_stop_all();
+  XDRV_101_motor_stop_all();
 
   // init_window();
 
@@ -319,9 +327,9 @@ void XDRV_101_Init()
   XDRV_101_motor.dest_pos = 0;
   XDRV_101_state.state = 6;
 
-  // Set initSuccess at the very end of the init process
+  // Set XDRV_101_initSuccess at the very end of the init process
   // Init is successful
-  initSuccess = true;
+  XDRV_101_initSuccess = true;
 }
 
 void Xdrv_101_check_state(void)
@@ -366,20 +374,20 @@ void Xdrv_101_check_state(void)
     break;
   case 2: // do calibration
     XDRV_101_motor.act_pos = -1;
-    Ventil.setmotor(_CW, 100);
+    XDRV_101_Ventil.setmotor(_CW, 100);
     XDRV_101_motor.dir = true;
     XDRV_101_motor.run = true;
     XDRV_101_state.state = 3;
   case 3: // calibration opening
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
-      Ventil.setmotor(_STOP);
+      XDRV_101_Ventil.setmotor(_STOP);
       XDRV_101_motor.run = false;
       XDRV_101_state.state = 4;
     }
     break;
   case 4: // do calibration close
-    Ventil.setmotor(_CCW, 100);
+    XDRV_101_Ventil.setmotor(_CCW, 100);
     XDRV_101_motor.dir = false;
     XDRV_101_motor.run = true;
     XDRV_101_state.max_time = 0;
@@ -413,7 +421,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      Ventil.setmotor(_CCW, 100);
+      XDRV_101_Ventil.setmotor(_CCW, 100);
       XDRV_101_motor.dir = false;
       XDRV_101_motor.run = true;
       XDRV_101_state.state = 7;
@@ -426,7 +434,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      Ventil.setmotor(_CW, 100);
+      XDRV_101_Ventil.setmotor(_CW, 100);
       XDRV_101_motor.dir = true;
       XDRV_101_motor.run = true;
       XDRV_101_state.state = 8;
@@ -478,7 +486,7 @@ void Xdrv_101_check_state(void)
   }
 }
 
-void Xdrv_101_check_state_timer_1s()
+void Xdrv_101_check_state_1s()
 {
 
   switch (XDRV_101_state.state)
@@ -501,7 +509,40 @@ void Xdrv_101_check_1s(void)
 {
 
   Xdrv_101_check_ina219();
+  Xdrv_101_check_state_1s();
 }
+
+void XDRV_101_show(bool json)
+{
+  char voltage[16];
+  dtostrfd(XDRV_101_ina219.busVoltage_V, Settings->flag2.voltage_resolution, voltage);
+  char current[16];
+  dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
+  char power[16];
+  dtostrfd(XDRV_101_ina219.busVoltage_V * XDRV_101_ina219.current_mA, Settings->flag2.wattage_resolution, power);
+  char name[16];
+  snprintf_P(name, sizeof(name), PSTR("%s"), XDRV_101_INA219_TYPE[0]);
+
+  if (json)
+  {
+    ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+                     name, INA219_ADDRESSES[i], voltage, current, power);
+#ifdef USE_DOMOTICZ
+    if (0 == TasmotaGlobal.tele_period)
+    {
+      DomoticzSensor(DZ_VOLTAGE, voltage);
+      DomoticzSensor(DZ_CURRENT, current);
+    }
+#endif // USE_DOMOTICZ
+#ifdef USE_WEBSERVER
+  }
+  else
+  {
+    WSContentSend_PD(XDRV_101_HTTP_SNS_INA219_DATA, name, voltage, name, current, name, power);
+#endif // USE_WEBSERVER
+  }
+}
+
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -515,7 +556,7 @@ bool Xdrv101(uint32_t function)
     XDRV_101_Init();
     // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My project init is done..."));
   }
-  else if (initSuccess)
+  else if (XDRV_101_initSuccess)
   {
 
     switch (function)
@@ -523,9 +564,11 @@ bool Xdrv101(uint32_t function)
       // Select suitable interval for polling your function
     case FUNC_EVERY_SECOND:
       Xdrv_101_check_1s();
-      //      case FUNC_EVERY_250_MSECOND:
+
+      //    case FUNC_EVERY_250_MSECOND:
       //    case FUNC_EVERY_200_MSECOND:
       //    case FUNC_EVERY_100_MSECOND:
+
     case FUNC_EVERY_50_MSECOND:
       // MyProjectProcessing();
       Xdrv_101_check_state();
@@ -536,6 +579,12 @@ bool Xdrv101(uint32_t function)
       // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling My Project Command..."));
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
+    case FUNC_JSON_APPEND:
+      break;
+#ifdef USE_WEBSERVER
+    case FUNC_WEB_SENSOR:
+      break;
+#endif // USE_WEBSERVER
     }
   }
 
