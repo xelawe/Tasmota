@@ -34,7 +34,7 @@
    INA219_WE ina219 = INA219_WE(&Wire, I2C_ADDRESS); -> all together
 */
 INA219_WE ina219 = INA219_WE(XDRV_101_I2C_ADDRESS);
-const char *XDRV_101_INA219_TYPE[] = { "INA219", "ISL28022" };
+const char *XDRV_101_INA219_TYPE[] = {"INA219", "ISL28022"};
 
 struct XDRV_101_INA219
 {
@@ -580,9 +580,11 @@ bool Xdrv101(uint32_t function)
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
     case FUNC_JSON_APPEND:
+      XDRV_101_show(1);
       break;
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
+      XDRV_101_show(0);
       break;
 #endif // USE_WEBSERVER
     }
