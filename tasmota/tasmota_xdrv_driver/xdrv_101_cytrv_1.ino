@@ -129,6 +129,7 @@ bool Xdrv_101_init_ina219()
   else
   {
     // Serial.println("INA219 connected!");
+    I2cSetActiveFound(XDRV_101_I2C_ADDRESS, XDRV_101_INA219_TYPE[0]);
   }
 
   /* Set ADC Mode for Bus and ShuntVoltage
