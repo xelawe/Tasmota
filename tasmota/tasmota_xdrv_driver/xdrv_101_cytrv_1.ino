@@ -20,11 +20,12 @@
 #warning **** INA219 from tasmota was deactivated... ****
 #endif
 
+//*********************************************************************************************/
 // INA219 part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+//*********************************************************************************************/
 #include <Wire.h>
 #include "INA219_WE.h"
-#include "WEMOS_Motor.h"
+
 #define XDRV_101_I2C_ADDRESS 0x40
 
 /* There are several ways to create your INA219 object:
@@ -54,68 +55,6 @@ const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
     "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
     "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif // USE_WEBSERVER
-
-// MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-struct XDRV_101_MQTT
-{
-  boolean log_mqtt;
-  boolean pub_sens;
-  int dest_pos_mqtt;
-  boolean cal_mqtt;
-} XDRV_101_mqtt;
-
-// State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-struct XDRV_101_STATE
-{
-  unsigned long State_millis;
-
-  unsigned long dest_millis;
-  unsigned long old_millis;
-
-  int state;
-  int state_old;
-  int max_time;
-  int pos_time;
-
-} XDRV_101_state;
-
-// Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-// Motor shield I2C Address: 0x30
-// PWM frequency: 1000Hz(1kHz)
-// Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
-Motor XDRV_101_Ventil(0x30, _MOTOR_B, 1000); // Motor B
-
-struct XDRV_101_MOTOR
-{
-  int pwm;
-
-  boolean run = false;
-  boolean dir = false;
-
-  int act_pos;
-  int dest_pos;
-  int old_pos;
-
-} XDRV_101_motor;
-
-/*********************************************************************************************\
- * My IoT Device Functions
-\*********************************************************************************************/
-
-// This variable will be set to true after initialization
-bool XDRV_101_initSuccess = false;
-
-/*
-  Optional: if you need to pass any command for your device
-  Commands are issued in Console or Web Console
-  Commands:
-    Say_Hello  - Only prints some text. Can be made something more useful...
-    SendMQTT   - Send a MQTT example message
-    Help       - Prints a list of available commands
-*/
 
 bool Xdrv_101_init_ina219()
 {
@@ -240,98 +179,35 @@ void Xdrv_101_print_ina219()
   }
 }
 
-void Xdrv_101_state_motor_stop()
+//*********************************************************************************************/
+// MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//*********************************************************************************************/
+
+struct XDRV_101_MQTT
 {
-  XDRV_101_Ventil.setmotor(_STOP);
-  XDRV_101_motor.run = false;
-  XDRV_101_state.state = 1;
-  XDRV_101_mqtt.pub_sens = true;
-  Xdrv_101_check_ina219();
-}
+  boolean log_mqtt;
+  boolean pub_sens;
+  int dest_pos_mqtt;
+  boolean cal_mqtt;
+} XDRV_101_mqtt;
 
-void Xdrv_101_init_state()
+//*********************************************************************************************/
+// State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//*********************************************************************************************/
+
+struct XDRV_101_STATE
 {
-  XDRV_101_state.state = 0;
-  XDRV_101_state.max_time = 46;
-  // set_state_tact();
-}
+  unsigned long State_millis;
 
-void XDRV_101_motor_stop_all()
-{
-  XDRV_101_Ventil.setmotor(_STOP);
-  XDRV_101_motor.run = false;
-}
+  unsigned long dest_millis;
+  unsigned long old_millis;
 
-const char MyProjectCommands[] PROGMEM = "|" // No Prefix
-                                         "Say_Hello|"
-                                         "SendMQTT|"
-                                         "Help";
+  int state;
+  int state_old;
+  int max_time;
+  int pos_time;
 
-void (*const MyProjectCommand[])(void) PROGMEM = {
-    &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
-
-void CmdSay_Hello(void)
-{
-  // AddLog(LOG_LEVEL_INFO, PSTR("Say_Hello: Hello!"));
-  ResponseCmndDone();
-}
-
-char payload[200];
-char topic[100];
-
-void CmdSendMQTT(void)
-{
-  // AddLog(LOG_LEVEL_INFO, PSTR("Sending MQTT message."));
-
-  snprintf_P(topic, sizeof(topic), PSTR("tasmota/myproject"));
-
-  snprintf_P(payload, sizeof(payload),
-             PSTR("{\"" D_JSON_TIME "\":\"%s\",\"name\":\"My Project\"}"),
-             GetDateAndTime(DT_LOCAL).c_str());
-
-  // retain = true
-  MqttPublishPayload(topic, payload, strlen(payload), false);
-
-  ResponseCmndDone();
-}
-
-void CmdHelp(void)
-{
-  // AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - Say_Hello, SendMQTT, Help"));
-  ResponseCmndDone();
-}
-
-/*********************************************************************************************\
- * Tasmota Functions
-\*********************************************************************************************/
-
-void XDRV_101_Init()
-{
-
-  /*
-    Here goes My Project setting.
-    Usually this part is included into setup() function
-  */
-
-  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
-
-  // Serial.begin(115200);
-
-  XDRV_101_motor_stop_all();
-
-  // init_window();
-
-  Xdrv_101_init_ina219();
-
-  Xdrv_101_init_state();
-
-  XDRV_101_motor.dest_pos = 0;
-  XDRV_101_state.state = 6;
-
-  // Set XDRV_101_initSuccess at the very end of the init process
-  // Init is successful
-  XDRV_101_initSuccess = true;
-}
+} XDRV_101_state;
 
 void Xdrv_101_check_state(void)
 {
@@ -504,6 +380,138 @@ void Xdrv_101_check_state_1s()
 
     break;
   }
+}
+
+void Xdrv_101_state_motor_stop()
+{
+  XDRV_101_Ventil.setmotor(_STOP);
+  XDRV_101_motor.run = false;
+  XDRV_101_state.state = 1;
+  XDRV_101_mqtt.pub_sens = true;
+  Xdrv_101_check_ina219();
+}
+
+void Xdrv_101_init_state()
+{
+  XDRV_101_state.state = 0;
+  XDRV_101_state.max_time = 46;
+  // set_state_tact();
+}
+
+//*********************************************************************************************/
+// Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//*********************************************************************************************/
+
+#include "WEMOS_Motor.h"
+// Motor shield I2C Address: 0x30
+// PWM frequency: 1000Hz(1kHz)
+// Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
+Motor XDRV_101_Ventil(0x30, _MOTOR_B, 1000); // Motor B
+
+struct XDRV_101_MOTOR
+{
+  int pwm;
+
+  boolean run = false;
+  boolean dir = false;
+
+  int act_pos;
+  int dest_pos;
+  int old_pos;
+
+} XDRV_101_motor;
+
+void XDRV_101_motor_stop_all()
+{
+  XDRV_101_Ventil.setmotor(_STOP);
+  XDRV_101_motor.run = false;
+}
+
+/*********************************************************************************************\
+ * My IoT Device Functions
+\*********************************************************************************************/
+
+// This variable will be set to true after initialization
+bool XDRV_101_initSuccess = false;
+
+/*
+  Optional: if you need to pass any command for your device
+  Commands are issued in Console or Web Console
+  Commands:
+    Say_Hello  - Only prints some text. Can be made something more useful...
+    SendMQTT   - Send a MQTT example message
+    Help       - Prints a list of available commands
+*/
+
+const char MyProjectCommands[] PROGMEM = "|" // No Prefix
+                                         "Say_Hello|"
+                                         "SendMQTT|"
+                                         "Help";
+
+void (*const MyProjectCommand[])(void) PROGMEM = {
+    &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
+
+void CmdSay_Hello(void)
+{
+  // AddLog(LOG_LEVEL_INFO, PSTR("Say_Hello: Hello!"));
+  ResponseCmndDone();
+}
+
+char payload[200];
+char topic[100];
+
+void CmdSendMQTT(void)
+{
+  // AddLog(LOG_LEVEL_INFO, PSTR("Sending MQTT message."));
+
+  snprintf_P(topic, sizeof(topic), PSTR("tasmota/myproject"));
+
+  snprintf_P(payload, sizeof(payload),
+             PSTR("{\"" D_JSON_TIME "\":\"%s\",\"name\":\"My Project\"}"),
+             GetDateAndTime(DT_LOCAL).c_str());
+
+  // retain = true
+  MqttPublishPayload(topic, payload, strlen(payload), false);
+
+  ResponseCmndDone();
+}
+
+void CmdHelp(void)
+{
+  // AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - Say_Hello, SendMQTT, Help"));
+  ResponseCmndDone();
+}
+
+/*********************************************************************************************\
+ * Tasmota Functions
+\*********************************************************************************************/
+
+void XDRV_101_Init()
+{
+
+  /*
+    Here goes My Project setting.
+    Usually this part is included into setup() function
+  */
+
+  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
+
+  // Serial.begin(115200);
+
+  XDRV_101_motor_stop_all();
+
+  // init_window();
+
+  Xdrv_101_init_ina219();
+
+  Xdrv_101_init_state();
+
+  XDRV_101_motor.dest_pos = 0;
+  XDRV_101_state.state = 6;
+
+  // Set XDRV_101_initSuccess at the very end of the init process
+  // Init is successful
+  XDRV_101_initSuccess = true;
 }
 
 void Xdrv_101_check_1s(void)
