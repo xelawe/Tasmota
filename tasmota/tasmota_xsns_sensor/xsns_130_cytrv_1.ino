@@ -2,8 +2,8 @@
 #ifdef USE_I2C
 #ifdef USE_CYTRV_1
 
-#warning **** xsns cyTRV_1 is included... ****
-
+#warning **** xsns cyTRV_130 is included... ****
+ 
 // Define driver ID
 #define XSNS_130  130
 
