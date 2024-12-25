@@ -75,7 +75,7 @@ struct XDRV_101_STATE
 // Motor shield I2C Address: 0x30
 // PWM frequency: 1000Hz(1kHz)
 // Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
-Motor XDRV_101_Ventil(0x30, _MOTOR_B, 1000); // Motor B
+Motor *XDRV_101_Ventil;
 
 struct XDRV_101_MOTOR
 {
@@ -239,7 +239,6 @@ void Xdrv_101_print_ina219()
 // MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
 
-
 //*********************************************************************************************/
 // State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -286,20 +285,20 @@ void Xdrv_101_check_state(void)
     break;
   case 2: // do calibration
     XDRV_101_motor.act_pos = -1;
-    XDRV_101_Ventil.setmotor(_CW, 100);
+    XDRV_101_Ventil->setmotor(_CW, 100);
     XDRV_101_motor.dir = true;
     XDRV_101_motor.run = true;
     XDRV_101_state.state = 3;
   case 3: // calibration opening
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
-      XDRV_101_Ventil.setmotor(_STOP);
+      XDRV_101_Ventil->setmotor(_STOP);
       XDRV_101_motor.run = false;
       XDRV_101_state.state = 4;
     }
     break;
   case 4: // do calibration close
-    XDRV_101_Ventil.setmotor(_CCW, 100);
+    XDRV_101_Ventil->setmotor(_CCW, 100);
     XDRV_101_motor.dir = false;
     XDRV_101_motor.run = true;
     XDRV_101_state.max_time = 0;
@@ -333,7 +332,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      XDRV_101_Ventil.setmotor(_CCW, 100);
+      XDRV_101_Ventil->setmotor(_CCW, 100);
       XDRV_101_motor.dir = false;
       XDRV_101_motor.run = true;
       XDRV_101_state.state = 7;
@@ -346,7 +345,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      XDRV_101_Ventil.setmotor(_CW, 100);
+      XDRV_101_Ventil->setmotor(_CW, 100);
       XDRV_101_motor.dir = true;
       XDRV_101_motor.run = true;
       XDRV_101_state.state = 8;
@@ -419,7 +418,7 @@ void Xdrv_101_check_state_1s()
 
 void Xdrv_101_state_motor_stop()
 {
-  XDRV_101_Ventil.setmotor(_STOP);
+  XDRV_101_Ventil->setmotor(_STOP);
   XDRV_101_motor.run = false;
   XDRV_101_state.state = 1;
   XDRV_101_mqtt.pub_sens = true;
@@ -436,11 +435,16 @@ void Xdrv_101_init_state()
 //*********************************************************************************************/
 // Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
+void XDRV_101_init_motor()
+{
+  XDRV_101_Ventil = new Motor(0x30, _MOTOR_B, 1000); // Motor B
 
+  XDRV_101_motor_stop_all();
+}
 
 void XDRV_101_motor_stop_all()
 {
-  XDRV_101_Ventil.setmotor(_STOP);
+  XDRV_101_Ventil->setmotor(_STOP);
   XDRV_101_motor.run = false;
 }
 
@@ -514,8 +518,7 @@ void XDRV_101_Init()
   // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
 
   // Serial.begin(115200);
-
-  XDRV_101_motor_stop_all();
+  XDRV_101_init_motor();
 
   // init_window();
 
