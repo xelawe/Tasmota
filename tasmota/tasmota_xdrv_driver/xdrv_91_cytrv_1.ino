@@ -11,9 +11,9 @@
  *
 \*********************************************************************************************/
 
-#warning **** xdrv cyTRV_1 is included... ****
+#warning **** xdrv cyTRV_101 is included... ****
 
-#define XDRV_101 101
+#define XDRV_91 91
 
 #ifdef USE_INA219
 #undef USE_INA219
@@ -36,6 +36,13 @@
 */
 INA219_WE ina219 = INA219_WE(XDRV_101_I2C_ADDRESS);
 const char *XDRV_101_INA219_TYPE[] = {"INA219", "ISL28022"};
+
+#ifdef USE_WEBSERVER
+const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
+    "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
+    "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
+#endif // USE_WEBSERVER
 
 //*********************************************************************************************/
 // MQTT decl  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -104,13 +111,6 @@ struct XDRV_101_INA219
 
   float max_curr = 50;
 } XDRV_101_ina219;
-
-#ifdef USE_WEBSERVER
-const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
-    "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
-    "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
-#endif // USE_WEBSERVER
 
 bool Xdrv_101_init_ina219()
 {
@@ -575,7 +575,7 @@ void XDRV_101_show(bool json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv101(uint32_t function)
+bool Xdrv91(uint32_t function)
 {
 
   bool result = false;
@@ -583,7 +583,7 @@ bool Xdrv101(uint32_t function)
   if (FUNC_INIT == function)
   {
     XDRV_101_Init();
-    // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My project init is done..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My project init is done..."));
   }
   else if (XDRV_101_initSuccess)
   {
@@ -606,7 +606,7 @@ bool Xdrv101(uint32_t function)
     // Command support
     case FUNC_COMMAND:
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
-      if (XDRV_101 == XdrvMailbox.index)
+      if (XDRV_91 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
         result = DecodeCommand(MyProjectCommands, MyProjectCommand);
