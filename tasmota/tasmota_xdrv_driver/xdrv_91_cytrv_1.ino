@@ -467,7 +467,7 @@ bool XDRV_101_initSuccess = false;
 const char MyProjectCommands[] PROGMEM = "|" // No Prefix
                                          "Say_Hello|"
                                          "SendMQTT|"
-                                         "Help";
+                                         "HELP";
 
 void (*const MyProjectCommand[])(void) PROGMEM = {
     &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
@@ -583,7 +583,7 @@ bool Xdrv91(uint32_t function)
   if (FUNC_INIT == function)
   {
     XDRV_101_Init();
-    AddLog(LOG_LEVEL_INFO, PSTR("My project init is done..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("cyTRV init is done..."));
   }
   else if (XDRV_101_initSuccess)
   {
@@ -606,10 +606,10 @@ bool Xdrv91(uint32_t function)
     // Command support
     case FUNC_COMMAND_DRIVER:
       AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
+      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       if (XDRV_91 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
-        result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         // result = XDRV_101_Command(){...}; // Return true on success
       }
       break;
