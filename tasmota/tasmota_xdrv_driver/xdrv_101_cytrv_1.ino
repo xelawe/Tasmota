@@ -499,7 +499,7 @@ void CmdSendMQTT(void)
 
 void CmdHelp(void)
 {
-  // AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - Say_Hello, SendMQTT, Help"));
+  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - Say_Hello, SendMQTT, Help"));
   ResponseCmndDone();
 }
 
@@ -606,11 +606,11 @@ bool Xdrv101(uint32_t function)
     // Command support
     case FUNC_COMMAND:
       AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
-      if (XSNS_101 == XdrvMailbox.index)
+      if (XDRV_101 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
         result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-        // result = XSNS_101_Command(){...}; // Return true on success
+        // result = XDRV_101_Command(){...}; // Return true on success
       }
       break;
 
