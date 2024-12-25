@@ -605,12 +605,19 @@ bool Xdrv101(uint32_t function)
 
     // Command support
     case FUNC_COMMAND:
-      // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling My Project Command..."));
-      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
+      if (XSNS_101 == XdrvMailbox.index)
+      {
+        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
+        result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+        // result = XSNS_101_Command(){...}; // Return true on success
+      }
       break;
+
     case FUNC_JSON_APPEND:
       XDRV_101_show(1);
       break;
+
 #ifdef USE_WEBSERVER
     case FUNC_WEB_SENSOR:
       XDRV_101_show(0);
