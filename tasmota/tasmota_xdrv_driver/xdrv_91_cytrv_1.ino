@@ -583,7 +583,7 @@ bool Xdrv91(uint32_t function)
   if (FUNC_INIT == function)
   {
     XDRV_101_Init();
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My project init is done..."));
+    AddLog(LOG_LEVEL_INFO, PSTR("My project init is done..."));
   }
   else if (XDRV_101_initSuccess)
   {
@@ -604,14 +604,18 @@ bool Xdrv91(uint32_t function)
       break;
 
     // Command support
-    case FUNC_COMMAND:
-      AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
+    case FUNC_COMMAND_DRIVER:
+      AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
       if (XDRV_91 == XdrvMailbox.index)
       {
-        AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("Calling Xdrv_101 Command..."));
+        AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
         result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         // result = XDRV_101_Command(){...}; // Return true on success
       }
+      break;
+
+    case FUNC_ACTIVE:
+      result = true;
       break;
 
     case FUNC_JSON_APPEND:
