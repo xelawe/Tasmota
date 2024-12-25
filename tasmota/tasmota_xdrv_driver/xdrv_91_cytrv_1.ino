@@ -605,7 +605,7 @@ bool Xdrv91(uint32_t function)
 
     // Command support
     case FUNC_COMMAND_DRIVER:
-      AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
+      AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
       if (XDRV_91 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
