@@ -626,6 +626,7 @@ bool Xdrv91(uint32_t function)
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
       }
+        return result;
       break;
 
     case FUNC_ACTIVE:
