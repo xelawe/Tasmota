@@ -516,19 +516,29 @@ bool XDRV_101_Command(void)
   bool serviced = true;
   char sub_string[XdrvMailbox.data_len];
 
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "CAL"))
-  { // Note 1 used for param number
-    // MyDriverName_Reset();
+  // Command Calibration
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "CAL")) // Note 1 used for param number
+  {
+    XDRV_101_mqtt.cal_mqtt = true;
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
-    Response_P(PSTR("{\"%s\":{\"CAL\":\"OK\"}}"), "TRV");
+    // Response_P(PSTR("{\"%s\":{\"Calibration\":\"OK\"}}"), "TRV");
+    ResponseCmndDone();
     return serviced;
   }
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "POS"))
-  { // Note 1 used for param number
-    // MyDriverName_Reset();
+
+  // Command Position
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "POS")) // Note 1 used for param number
+  {
+    XDRV_101_motor.dest_pos = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2)); // Note 2 used for param number
+
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+    Response_P(PSTR("{\"%s\":{\"Position\":\"OK\"}}"), "TRV");
     return serviced;
   }
+
+  // Command unknown
+  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command unknown ..."));
+  Response_P(PSTR("{\"%s\":{\"Command\":\"Error\"}}"), "TRV");
   return serviced;
 }
 /*********************************************************************************************\
