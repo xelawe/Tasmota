@@ -111,8 +111,8 @@ struct XDRV_101_MOTOR
 
 #ifdef USE_WEBSERVER
 const char XDRV_101_HTTP_SNS_TRV_DATA[] PROGMEM =
-    "{s}%s  Position {m}%s  % {e}"
-    "{s}%s  State {m}%s    {e}"
+    "{s}%s  Position {m}%s " D_UNIT_PERCENT " {e}"
+    "{s}%s  State {m}%s  {e}"
     "{s}%s  max_time {m}%s " D_UNIT_SECOND " {e}";
 #endif // USE_WEBSERVER
 
