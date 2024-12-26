@@ -519,7 +519,7 @@ bool XDRV_101_Command(void)
     // MyDriverName_Reset();
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
     return serviced;
-  }  
+  }
   return serviced;
 }
 /*********************************************************************************************\
@@ -562,6 +562,12 @@ void Xdrv_101_check_1s(void)
 
 void XDRV_101_show(bool json)
 {
+  XDRV_101_show_INA219(json);
+  XDRV_101_show_TRV(json);
+}
+
+void XDRV_101_show_INA219(bool json)
+{
   char voltage[16];
   dtostrfd(XDRV_101_ina219.busVoltage_V, Settings->flag2.voltage_resolution, voltage);
   char current[16];
@@ -575,13 +581,7 @@ void XDRV_101_show(bool json)
   {
     ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
                      name, XDRV_101_I2C_ADDRESS, voltage, current, power);
-#ifdef USE_DOMOTICZ
-    if (0 == TasmotaGlobal.tele_period)
-    {
-      DomoticzSensor(DZ_VOLTAGE, voltage);
-      DomoticzSensor(DZ_CURRENT, current);
-    }
-#endif // USE_DOMOTICZ
+
 #ifdef USE_WEBSERVER
   }
   else
@@ -591,6 +591,30 @@ void XDRV_101_show(bool json)
   }
 }
 
+void XDRV_101_show_TRV(bool json)
+{
+  char position[16];
+  dtostrfd(XDRV_101_MOTOR.act_pos, 0, position);
+  char state[16];
+  dtostrfd(XDRV_101_STATE.state, 0, state);
+  char max_time[16];
+  dtostrfd(XDRV_101_STATE.max_time, 0, max_time);
+  char name[16];
+  snprintf_P(name, sizeof(name), PSTR("%s"), "TRV");
+
+  if (json)
+  {
+    ResponseAppend_P(PSTR(",\"%s\":{\"Position "\":%s,\"" State "\":%s,\"" Max_Time "\":%s}"),
+                     name, position, state, max_time);
+
+#ifdef USE_WEBSERVER
+  }
+  else
+  {
+    WSContentSend_PD(XDRV_101_HTTP_SNS_TRV_DATA, name, position, name, state, name, max_time);
+#endif // USE_WEBSERVER
+  }
+}
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
@@ -632,7 +656,7 @@ bool Xdrv91(uint32_t function)
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
       }
-      
+
       return result;
       break;
 
