@@ -513,6 +513,7 @@ void CmdHelp(void)
   ResponseCmndDone();
 }
 
+// Command Calibration
 void CmdTRVCal(void)
 {
   XDRV_101_mqtt.cal_mqtt = true;
@@ -520,9 +521,15 @@ void CmdTRVCal(void)
   ResponseCmndDone();
 }
 
+// Command Position
 void CmdTRVPos()
 {
+    char sub_string[XdrvMailbox.data_len];
+  
   AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+ // int pos = XdrvMailbox.payload;
+// atoi(subStr(sub_string, XdrvMailbox.data, ",", 2));
+    Response_P(PSTR("{\"%s\":{\"Position\":\"%s OK\"}}"), "TRV", XdrvMailbox.payload);
   ResponseCmndDone();
 }
 
