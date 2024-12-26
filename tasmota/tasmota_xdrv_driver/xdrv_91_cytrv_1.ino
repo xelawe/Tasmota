@@ -482,7 +482,7 @@ void (*const MyProjectCommand[])(void) PROGMEM = {
 
 void CmdSay_Hello(void)
 {
-  // AddLog(LOG_LEVEL_INFO, PSTR("Say_Hello: Hello!"));
+  AddLog(LOG_LEVEL_INFO, PSTR("Say_Hello: Hello!"));
   ResponseCmndDone();
 }
 
