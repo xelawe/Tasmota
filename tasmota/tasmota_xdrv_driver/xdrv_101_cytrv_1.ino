@@ -13,12 +13,15 @@
 
 #warning **** xdrv cyTRV_101 is included... ****
 
-#define XDRV_91 91
+#define XDRV_101 101
 
 #ifdef USE_INA219
 #undef USE_INA219
 #warning **** INA219 from tasmota was deactivated... ****
 #endif
+
+
+#define D_cyTRV         "cyTRV"
 
 //*********************************************************************************************/
 // INA219 decl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -472,9 +475,9 @@ bool XDRV_101_initSuccess = false;
     Help       - Prints a list of available commands
 */
 
-const char MyProjectCommands[] PROGMEM = "|" // No Prefix
-                                         "cyTRVCal|"
-                                         "cyTRVPos|"
+const char MyProjectCommands[] PROGMEM = D_cyTRV"|" // No Prefix
+                                         "Cal|"
+                                         "Pos|"
 //                                         "Say_Hello|"
 //                                         "SendMQTT|"
                                          "HELP";
@@ -511,14 +514,14 @@ void CmdSendMQTT(void)
 
 void CmdHelp(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - TRVCal, TRVPos, Say_Hello, SendMQTT, Help"));
+  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - cyTRVCal, cyTRVPos, cyTRVHelp"));
   ResponseCmndDone();
 }
 
 // Command Calibration
 void CmdTRVCal(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
+  //AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
   XDRV_101_mqtt.cal_mqtt = true;
   ResponseCmndDone();
 }
@@ -526,13 +529,13 @@ void CmdTRVCal(void)
 // Command Position
 void CmdTRVPos()
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+  //AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
   XDRV_101_motor.dest_pos = XdrvMailbox.payload;
 
   char position[16];
   dtostrfd(XDRV_101_motor.dest_pos, 0, position);
   AddLog(LOG_LEVEL_INFO, position);
-  Response_P(PSTR("{\"%s\":{\"Position\":\"%s OK\"}}"), "TRV", position);
+  Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
 
   // ResponseCmndDone();
 }
@@ -583,7 +586,7 @@ void XDRV_101_Init()
     Usually this part is included into setup() function
   */
 
-  // AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
 
   // Serial.begin(115200);
   XDRV_101_init_motor();
@@ -649,7 +652,7 @@ void XDRV_101_show_TRV(bool json)
   char max_time[16];
   dtostrfd(XDRV_101_state.max_time, 0, max_time);
   char name[16];
-  snprintf_P(name, sizeof(name), PSTR("%s"), "cyTRV");
+  snprintf_P(name, sizeof(name), PSTR("%s"), D_cyTRV);
 
   if (json)
   {
@@ -667,7 +670,7 @@ void XDRV_101_show_TRV(bool json)
 /*********************************************************************************************\
  * Interface
 \*********************************************************************************************/
-bool Xdrv91(uint32_t function)
+bool Xdrv101(uint32_t function)
 {
 
   bool result = false;
@@ -675,7 +678,7 @@ bool Xdrv91(uint32_t function)
   if (FUNC_INIT == function)
   {
     XDRV_101_Init();
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("cyTRV init is done..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV" init is done..."));
   }
   else if (XDRV_101_initSuccess)
   {
@@ -697,7 +700,7 @@ bool Xdrv91(uint32_t function)
 
     // Command support
     case FUNC_COMMAND:
-      AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
+      //AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
 
