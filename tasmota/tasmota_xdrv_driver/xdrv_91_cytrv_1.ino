@@ -503,6 +503,19 @@ void CmdHelp(void)
   ResponseCmndDone();
 }
 
+bool XDRV_101_Command(void)
+{
+  bool serviced = true;
+  char sub_string[XdrvMailbox.data_len];
+
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "CAL"))
+  { // Note 1 used for param number
+    // MyDriverName_Reset();
+    AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
+    return serviced;
+  }
+  return serviced;
+}
 /*********************************************************************************************\
  * Tasmota Functions
 \*********************************************************************************************/
@@ -609,8 +622,8 @@ bool Xdrv91(uint32_t function)
       if (XDRV_91 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
-        result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-        // result = XDRV_101_Command(){...}; // Return true on success
+        // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+        result = XDRV_101_Command(); // Return true on success
       }
       break;
 
