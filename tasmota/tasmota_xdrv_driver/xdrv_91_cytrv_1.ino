@@ -120,7 +120,6 @@ const char XDRV_101_HTTP_SNS_TRV_DATA[] PROGMEM =
 // INA219 part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
 
-
 bool Xdrv_101_init_ina219()
 {
   // Wire.begin();
@@ -521,6 +520,7 @@ bool XDRV_101_Command(void)
   { // Note 1 used for param number
     // MyDriverName_Reset();
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
+    Response_P(PSTR("{\"%s\":{\"CAL\":\"OK\"}}"), "TRV");
     return serviced;
   }
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "POS"))
@@ -604,7 +604,7 @@ void XDRV_101_show_TRV(bool json)
 {
   char position[16];
   dtostrfd(XDRV_101_motor.act_pos, 0, position);
-  //dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);  
+  // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
   char state[16];
   dtostrfd(XDRV_101_state.state, 0, state);
   char max_time[16];
@@ -665,6 +665,7 @@ bool Xdrv91(uint32_t function)
         AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
+        result = true;
       }
 
       return result;
