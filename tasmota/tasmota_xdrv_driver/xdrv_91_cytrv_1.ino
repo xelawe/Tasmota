@@ -532,7 +532,11 @@ bool XDRV_101_Command(void)
     XDRV_101_motor.dest_pos = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2)); // Note 2 used for param number
 
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
-    Response_P(PSTR("{\"%s\":{\"Position\":\"OK\"}}"), "TRV");
+
+    char position[16];
+    dtostrfd(XDRV_101_motor.dest_pos, 0, position);
+
+    Response_P(PSTR("{\"%s\":{\"Position\": %s\" OK\"}}"), "TRV", position);
     return serviced;
   }
 
