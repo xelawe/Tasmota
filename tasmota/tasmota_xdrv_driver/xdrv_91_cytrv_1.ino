@@ -514,6 +514,12 @@ bool XDRV_101_Command(void)
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
     return serviced;
   }
+  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "POS"))
+  { // Note 1 used for param number
+    // MyDriverName_Reset();
+    AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+    return serviced;
+  }  
   return serviced;
 }
 /*********************************************************************************************\
@@ -626,6 +632,7 @@ bool Xdrv91(uint32_t function)
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
       }
+      
       return result;
       break;
 
@@ -644,7 +651,7 @@ bool Xdrv91(uint32_t function)
 #endif // USE_WEBSERVER
     }
   }
-  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 End..."));
+
   return result;
 }
 
