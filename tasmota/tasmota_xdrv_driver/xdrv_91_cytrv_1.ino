@@ -473,12 +473,14 @@ bool XDRV_101_initSuccess = false;
 */
 
 const char MyProjectCommands[] PROGMEM = "|" // No Prefix
+                                         "TRVCal|"
+                                         "TRVPos|"
                                          "Say_Hello|"
                                          "SendMQTT|"
                                          "HELP";
 
 void (*const MyProjectCommand[])(void) PROGMEM = {
-    &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
+    &CmdTRVCal, &CmdTRVPos, &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
 
 void CmdSay_Hello(void)
 {
@@ -507,7 +509,20 @@ void CmdSendMQTT(void)
 
 void CmdHelp(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - Say_Hello, SendMQTT, Help"));
+  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - TRVCal, TRVPos, Say_Hello, SendMQTT, Help"));
+  ResponseCmndDone();
+}
+
+void CmdTRVCal(void)
+{
+  XDRV_101_mqtt.cal_mqtt = true;
+  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
+  ResponseCmndDone();
+}
+
+void CmdTRVPos()
+{
+  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
   ResponseCmndDone();
 }
 
@@ -578,7 +593,6 @@ void XDRV_101_Init()
 
 void Xdrv_101_check_1s(void)
 {
-
   Xdrv_101_check_ina219();
   Xdrv_101_check_state_1s();
 }
@@ -672,7 +686,10 @@ bool Xdrv91(uint32_t function)
 
     // Command support
     case FUNC_COMMAND:
-      result = DecodeCommand(MyProjectCommands, MyProjectCommand);      
+      AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
+      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+      break;
+
     case FUNC_COMMAND_DRIVER:
       AddLog(LOG_LEVEL_INFO, PSTR("Calling Driver Command..."));
       //      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
