@@ -535,7 +535,7 @@ void CmdTRVPos()
   // ResponseCmndDone();
 }
 
-bool XDRV_101_Command(void)
+/* bool XDRV_101_Command(void)
 {
   bool serviced = true;
   char sub_string[XdrvMailbox.data_len];
@@ -568,7 +568,7 @@ bool XDRV_101_Command(void)
   AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command unknown ..."));
   Response_P(PSTR("{\"%s\":{\"Command\":\"Error\"}}"), "TRV");
   return serviced;
-}
+} */
 /*********************************************************************************************\
  * Tasmota Functions
 \*********************************************************************************************/
@@ -699,7 +699,7 @@ bool Xdrv91(uint32_t function)
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
 
-    case FUNC_COMMAND_DRIVER:
+/*     case FUNC_COMMAND_DRIVER:
       AddLog(LOG_LEVEL_INFO, PSTR("Calling Driver Command..."));
       //      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       if (XDRV_91 == XdrvMailbox.index)
@@ -708,7 +708,7 @@ bool Xdrv91(uint32_t function)
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
       }
-      break;
+      break; */
 
     case FUNC_ACTIVE:
       result = true;
