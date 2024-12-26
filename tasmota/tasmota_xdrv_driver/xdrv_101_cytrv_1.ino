@@ -20,8 +20,7 @@
 #warning **** INA219 from tasmota was deactivated... ****
 #endif
 
-
-#define D_cyTRV         "cyTRV"
+#define D_cyTRV "cyTRV"
 
 //*********************************************************************************************/
 // INA219 decl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -475,16 +474,16 @@ bool XDRV_101_initSuccess = false;
     Help       - Prints a list of available commands
 */
 
-const char MyProjectCommands[] PROGMEM = D_cyTRV"|" // No Prefix
-                                         "Cal|"
-                                         "Pos|"
-//                                         "Say_Hello|"
-//                                         "SendMQTT|"
-                                         "HELP";
+const char MyProjectCommands[] PROGMEM = D_cyTRV "|" // No Prefix
+                                                 "Cal|"
+                                                 "Pos|"
+                                                 //                                         "Say_Hello|"
+                                                 //                                         "SendMQTT|"
+                                                 "HELP";
 
 void (*const MyProjectCommand[])(void) PROGMEM = {
-    &CmdTRVCal, &CmdTRVPos, 
-//    &CmdSay_Hello, &CmdSendMQTT, 
+    &CmdTRVCal, &CmdTRVPos,
+    //    &CmdSay_Hello, &CmdSendMQTT,
     &CmdHelp};
 
 /* void CmdSay_Hello(void)
@@ -514,14 +513,14 @@ void CmdSendMQTT(void)
 
 void CmdHelp(void)
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Help: Accepted commands - cyTRVCal, cyTRVPos, cyTRVHelp"));
+  AddLog(LOG_LEVEL_INFO, PSTR("cyTRV Help: Accepted commands - cyTRVCal, cyTRVPos, cyTRVHelp"));
   ResponseCmndDone();
 }
 
 // Command Calibration
 void CmdTRVCal(void)
 {
-  //AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
+  // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
   XDRV_101_mqtt.cal_mqtt = true;
   ResponseCmndDone();
 }
@@ -529,14 +528,13 @@ void CmdTRVCal(void)
 // Command Position
 void CmdTRVPos()
 {
-  //AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+  // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
   XDRV_101_motor.dest_pos = XdrvMailbox.payload;
 
   char position[16];
   dtostrfd(XDRV_101_motor.dest_pos, 0, position);
   AddLog(LOG_LEVEL_INFO, position);
   Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
-
   // ResponseCmndDone();
 }
 
@@ -678,7 +676,7 @@ bool Xdrv101(uint32_t function)
   if (FUNC_INIT == function)
   {
     XDRV_101_Init();
-    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV" init is done..."));
+    AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV " init is done..."));
   }
   else if (XDRV_101_initSuccess)
   {
@@ -700,20 +698,20 @@ bool Xdrv101(uint32_t function)
 
     // Command support
     case FUNC_COMMAND:
-      //AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
+      // AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
 
-/*     case FUNC_COMMAND_DRIVER:
-      AddLog(LOG_LEVEL_INFO, PSTR("Calling Driver Command..."));
-      //      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-      if (XDRV_91 == XdrvMailbox.index)
-      {
-        AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
-        // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-        result = XDRV_101_Command(); // Return true on success
-      }
-      break; */
+      /*     case FUNC_COMMAND_DRIVER:
+            AddLog(LOG_LEVEL_INFO, PSTR("Calling Driver Command..."));
+            //      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+            if (XDRV_91 == XdrvMailbox.index)
+            {
+              AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
+              // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+              result = XDRV_101_Command(); // Return true on success
+            }
+            break; */
 
     case FUNC_ACTIVE:
       result = true;
