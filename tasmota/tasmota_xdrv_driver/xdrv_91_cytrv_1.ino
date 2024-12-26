@@ -619,16 +619,12 @@ bool Xdrv91(uint32_t function)
     // Command support
     case FUNC_COMMAND_DRIVER:
       AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
-      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+//      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       if (XDRV_91 == XdrvMailbox.index)
       {
         AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
-<<<<<<< HEAD
         // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
         result = XDRV_101_Command(); // Return true on success
-=======
-        // result = XDRV_101_Command(){...}; // Return true on success
->>>>>>> d1cce3576666f8f3b9876068100366619d8f694a
       }
       break;
 
