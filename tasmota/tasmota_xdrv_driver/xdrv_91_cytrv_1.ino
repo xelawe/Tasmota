@@ -473,16 +473,18 @@ bool XDRV_101_initSuccess = false;
 */
 
 const char MyProjectCommands[] PROGMEM = "|" // No Prefix
-                                         "TRVCal|"
-                                         "TRVPos|"
-                                         "Say_Hello|"
-                                         "SendMQTT|"
+                                         "cyTRVCal|"
+                                         "cyTRVPos|"
+//                                         "Say_Hello|"
+//                                         "SendMQTT|"
                                          "HELP";
 
 void (*const MyProjectCommand[])(void) PROGMEM = {
-    &CmdTRVCal, &CmdTRVPos, &CmdSay_Hello, &CmdSendMQTT, &CmdHelp};
+    &CmdTRVCal, &CmdTRVPos, 
+//    &CmdSay_Hello, &CmdSendMQTT, 
+    &CmdHelp};
 
-void CmdSay_Hello(void)
+/* void CmdSay_Hello(void)
 {
   AddLog(LOG_LEVEL_INFO, PSTR("Say_Hello: Hello!"));
   ResponseCmndDone();
@@ -505,7 +507,7 @@ void CmdSendMQTT(void)
   MqttPublishPayload(topic, payload, strlen(payload), false);
 
   ResponseCmndDone();
-}
+} */
 
 void CmdHelp(void)
 {
@@ -647,7 +649,7 @@ void XDRV_101_show_TRV(bool json)
   char max_time[16];
   dtostrfd(XDRV_101_state.max_time, 0, max_time);
   char name[16];
-  snprintf_P(name, sizeof(name), PSTR("%s"), "TRV");
+  snprintf_P(name, sizeof(name), PSTR("%s"), "cyTRV");
 
   if (json)
   {
