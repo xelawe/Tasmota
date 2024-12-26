@@ -66,8 +66,8 @@ struct XDRV_101_MQTT
 {
   boolean log_mqtt;
   boolean pub_sens;
-  int dest_pos_mqtt;
-  boolean cal_mqtt;
+  int dest_pos;
+  boolean cal;
 } XDRV_101_mqtt;
 
 //*********************************************************************************************/
@@ -276,20 +276,20 @@ void Xdrv_101_check_state(void)
   case 1: // stopped
     if (XDRV_101_state.state == 1)
     {
-      if (XDRV_101_mqtt.dest_pos_mqtt != -1)
+      if (XDRV_101_mqtt.dest_pos != -1)
       {
-        XDRV_101_motor.dest_pos = XDRV_101_mqtt.dest_pos_mqtt;
+        XDRV_101_motor.dest_pos = XDRV_101_mqtt.dest_pos;
         XDRV_101_state.state = 6;
-        XDRV_101_mqtt.dest_pos_mqtt = -1;
+        XDRV_101_mqtt.dest_pos = -1;
       }
     }
 
     if (XDRV_101_state.state == 1)
     {
-      if (XDRV_101_mqtt.cal_mqtt == true)
+      if (XDRV_101_mqtt.cal == true)
       {
         XDRV_101_state.state = 2; // calibration
-        XDRV_101_mqtt.cal_mqtt = false;
+        XDRV_101_mqtt.cal = false;
       }
     }
     break;
@@ -521,7 +521,7 @@ void CmdHelp(void)
 void CmdTRVCal(void)
 {
   // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
-  XDRV_101_mqtt.cal_mqtt = true;
+  XDRV_101_mqtt.cal = true;
   ResponseCmndDone();
 }
 
@@ -529,7 +529,7 @@ void CmdTRVCal(void)
 void CmdTRVPos()
 {
   // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
-  XDRV_101_motor.dest_pos = XdrvMailbox.payload;
+  XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
 
   char position[16];
   dtostrfd(XDRV_101_motor.dest_pos, 0, position);
@@ -546,7 +546,7 @@ void CmdTRVPos()
   // Command Calibration
   if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "CAL")) // Note 1 used for param number
   {
-    XDRV_101_mqtt.cal_mqtt = true;
+    XDRV_101_mqtt.cal = true;
     AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
     // Response_P(PSTR("{\"%s\":{\"Calibration\":\"OK\"}}"), "TRV");
     ResponseCmndDone();
