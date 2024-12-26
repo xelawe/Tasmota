@@ -584,7 +584,7 @@ void XDRV_101_Init()
     Usually this part is included into setup() function
   */
 
-  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("My Project init..."));
+  AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV " init..."));
 
   // Serial.begin(115200);
   XDRV_101_init_motor();
