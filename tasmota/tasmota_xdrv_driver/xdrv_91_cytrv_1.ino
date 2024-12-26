@@ -536,7 +536,7 @@ bool XDRV_101_Command(void)
     char position[16];
     dtostrfd(XDRV_101_motor.dest_pos, 0, position);
 
-    Response_P(PSTR("{\"%s\":{\"Position\": %s\" OK\"}}"), "TRV", position);
+    Response_P(PSTR("{\"%s\":{\"Position\":\"%s OK\"}}"), "TRV", position);
     return serviced;
   }
 
