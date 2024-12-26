@@ -37,6 +37,18 @@
 INA219_WE ina219 = INA219_WE(XDRV_101_I2C_ADDRESS);
 const char *XDRV_101_INA219_TYPE[] = {"INA219", "ISL28022"};
 
+struct XDRV_101_INA219
+{
+  float shuntVoltage_mV = 0.0;
+  float loadVoltage_V = 0.0;
+  float busVoltage_V = 0.0;
+  float current_mA = 0.0;
+  float power_mW = 0.0;
+  bool ina219_overflow = false;
+
+  float max_curr = 50;
+} XDRV_101_ina219;
+
 #ifdef USE_WEBSERVER
 const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
     "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
@@ -97,20 +109,17 @@ struct XDRV_101_MOTOR
 
 } XDRV_101_motor;
 
+#ifdef USE_WEBSERVER
+const char XDRV_101_HTTP_SNS_TRV_DATA[] PROGMEM =
+    "{s}%s  Position {m}%s  % {e}"
+    "{s}%s  State {m}%s    {e}"
+    "{s}%s  max_time {m}%s " D_UNIT_SECOND " {e}";
+#endif // USE_WEBSERVER
+
 /*********************************************************************************************/
 // INA219 part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
-struct XDRV_101_INA219
-{
-  float shuntVoltage_mV = 0.0;
-  float loadVoltage_V = 0.0;
-  float busVoltage_V = 0.0;
-  float current_mA = 0.0;
-  float power_mW = 0.0;
-  bool ina219_overflow = false;
 
-  float max_curr = 50;
-} XDRV_101_ina219;
 
 bool Xdrv_101_init_ina219()
 {
@@ -594,17 +603,18 @@ void XDRV_101_show_INA219(bool json)
 void XDRV_101_show_TRV(bool json)
 {
   char position[16];
-  dtostrfd(XDRV_101_MOTOR.act_pos, 0, position);
+  dtostrfd(XDRV_101_motor.act_pos, 0, position);
+  //dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);  
   char state[16];
-  dtostrfd(XDRV_101_STATE.state, 0, state);
+  dtostrfd(XDRV_101_state.state, 0, state);
   char max_time[16];
-  dtostrfd(XDRV_101_STATE.max_time, 0, max_time);
+  dtostrfd(XDRV_101_state.max_time, 0, max_time);
   char name[16];
   snprintf_P(name, sizeof(name), PSTR("%s"), "TRV");
 
   if (json)
   {
-    ResponseAppend_P(PSTR(",\"%s\":{\"Position "\":%s,\"" State "\":%s,\"" Max_Time "\":%s}"),
+    ResponseAppend_P(PSTR(",\"%s\":{\"Position\":%s,\" State \":%s,\" Max_Time \":%s}"),
                      name, position, state, max_time);
 
 #ifdef USE_WEBSERVER
