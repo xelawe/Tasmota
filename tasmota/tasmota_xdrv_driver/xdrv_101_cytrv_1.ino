@@ -55,7 +55,7 @@ struct XDRV_101_INA219
 #ifdef USE_WEBSERVER
 const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
     "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}%s " D_CURRENT "{m}%s " D_UNIT_MILLIAMPERE "{e}"
+    "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
     "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif // USE_WEBSERVER
 
@@ -261,9 +261,9 @@ void XDRV_101_show_INA219(bool json)
   char voltage[16];
   dtostrfd(XDRV_101_ina219.busVoltage_V, Settings->flag2.voltage_resolution, voltage);
   char current[16];
-  dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
+  dtostrfd(XDRV_101_ina219.current_mA / 1000, Settings->flag2.current_resolution, current);
   char power[16];
-  dtostrfd(XDRV_101_ina219.busVoltage_V * XDRV_101_ina219.current_mA, Settings->flag2.wattage_resolution, power);
+  dtostrfd(XDRV_101_ina219.power_mW / 1000, Settings->flag2.wattage_resolution, power);
   char name[16];
   snprintf_P(name, sizeof(name), PSTR("%s"), XDRV_101_INA219_TYPE[0]);
 
