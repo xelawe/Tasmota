@@ -49,7 +49,7 @@
 #ifdef USER_TEMPLATE
 #undef USER_TEMPLATE
 #endif
-#define USER_TEMPLATE          "{\"NAME\":\"cyTRV\",\"GPIO\":[1,1,576,1,640,608,1,1,162,1,161,1,1,1],\"FLAG\":0,\"BASE\":18}" // [Template] Set JSON template
+#define USER_TEMPLATE          "{\"NAME\":\"cyTRV\",\"GPIO\":[1,1,576,1,640,608,1,1,162,1312,161,1,1,1],\"FLAG\":0,\"BASE\":18}" // [Template] Set JSON template
 #warning **** User_Template cyTRV was activated... ****
 
 
