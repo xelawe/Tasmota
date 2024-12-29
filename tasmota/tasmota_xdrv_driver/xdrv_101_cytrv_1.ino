@@ -600,7 +600,7 @@ void CmdTRVPos()
   XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
 
   char position[16];
-  dtostrfd(XDRV_101_motor.dest_pos, 0, position);
+  dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
   AddLog(LOG_LEVEL_INFO, position);
   Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
   // ResponseCmndDone();
