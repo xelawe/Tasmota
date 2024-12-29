@@ -20,6 +20,17 @@
 #warning **** INA219 from tasmota was deactivated... ****
 #endif
 
+#ifndef USE_BH1750
+#define USE_BH1750      // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
+#warning **** BH1750 from tasmota was activated... ****
+#endif
+
+#ifndef USE_DS18x20
+#define USE_DS18x20               // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
+//  #define W1_PARASITE_POWER     // Optimize for parasite powered sensors
+#warning **** DS18x20 from tasmota was activated... ****
+#endif
+
 #define D_cyTRV "cyTRV"
 
 //*********************************************************************************************/
