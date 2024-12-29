@@ -55,7 +55,7 @@ struct XDRV_101_INA219
 #ifdef USE_WEBSERVER
 const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
     "{s}%s " D_VOLTAGE "{m}%s " D_UNIT_VOLT "{e}"
-    "{s}%s " D_CURRENT "{m}%s " D_UNIT_AMPERE "{e}"
+    "{s}%s " D_CURRENT "{m}%s " D_UNIT_MILLIAMPERE "{e}"
     "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif // USE_WEBSERVER
 
