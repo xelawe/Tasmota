@@ -41,6 +41,7 @@ const char *XDRV_101_INA219_TYPE[] = {"INA219", "ISL28022"};
 
 struct XDRV_101_INA219
 {
+  bool active;
   float shuntVoltage_mV = 0.0;
   float loadVoltage_V = 0.0;
   float busVoltage_V = 0.0;
@@ -124,18 +125,18 @@ const char XDRV_101_HTTP_SNS_TRV_DATA[] PROGMEM =
 
 bool Xdrv_101_init_ina219()
 {
-  // Wire.begin();
-  // Wire.begin(/*SDA*/D2,/*SCL*/D1); //(D1mini)
+  XDRV_101_ina219.active = false;
+
   if (!ina219.init())
   {
     // Serial.println("INA219 not connected!");
-    return false;
+    return XDRV_101_ina219.active;
   }
-  else
-  {
-    // Serial.println("INA219 connected!");
-    I2cSetActiveFound(XDRV_101_I2C_ADDRESS, XDRV_101_INA219_TYPE[0]);
-  }
+  // else
+  //{
+  //  Serial.println("INA219 connected!");
+  I2cSetActiveFound(XDRV_101_I2C_ADDRESS, XDRV_101_INA219_TYPE[0]);
+  //}
 
   /* Set ADC Mode for Bus and ShuntVoltage
     Mode *            * Res / Samples *       * Conversion Time
@@ -189,12 +190,17 @@ bool Xdrv_101_init_ina219()
      following function and apply the offset you have detected.
   */
   // ina219.setShuntVoltOffset_mV(0.5); // insert the shunt voltage (millivolts) you detect at zero current
-
-  return true;
+  XDRV_101_ina219.active = true;
+  return XDRV_101_ina219.active;
 }
 
 void Xdrv_101_check_ina219()
 {
+
+  if (XDRV_101_ina219.active == false)
+  {
+    return;
+  }
 
   XDRV_101_ina219.shuntVoltage_mV = ina219.getShuntVoltage_mV();
   XDRV_101_ina219.busVoltage_V = ina219.getBusVoltage_V();
@@ -221,7 +227,7 @@ void Xdrv_101_check_ina219()
   // Serial.println();
 }
 
-void Xdrv_101_print_ina219()
+/* void Xdrv_101_print_ina219()
 {
   if (XDRV_101_mqtt.log_mqtt == false)
   {
@@ -243,8 +249,37 @@ void Xdrv_101_print_ina219()
   {
     // Serial.println("Overflow! Choose higher PGAIN");
   }
-}
+} */
 
+void XDRV_101_show_INA219(bool json)
+{
+  if (!XDRV_101_ina219.active)
+  {
+    return;
+  }
+
+  char voltage[16];
+  dtostrfd(XDRV_101_ina219.busVoltage_V, Settings->flag2.voltage_resolution, voltage);
+  char current[16];
+  dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
+  char power[16];
+  dtostrfd(XDRV_101_ina219.busVoltage_V * XDRV_101_ina219.current_mA, Settings->flag2.wattage_resolution, power);
+  char name[16];
+  snprintf_P(name, sizeof(name), PSTR("%s"), XDRV_101_INA219_TYPE[0]);
+
+  if (json)
+  {
+    ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
+                     name, XDRV_101_I2C_ADDRESS, voltage, current, power);
+
+#ifdef USE_WEBSERVER
+  }
+  else
+  {
+    WSContentSend_PD(XDRV_101_HTTP_SNS_INA219_DATA, name, voltage, name, current, name, power);
+#endif // USE_WEBSERVER
+  }
+}
 //*********************************************************************************************/
 // MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -613,31 +648,6 @@ void XDRV_101_show(bool json)
 {
   XDRV_101_show_INA219(json);
   XDRV_101_show_TRV(json);
-}
-
-void XDRV_101_show_INA219(bool json)
-{
-  char voltage[16];
-  dtostrfd(XDRV_101_ina219.busVoltage_V, Settings->flag2.voltage_resolution, voltage);
-  char current[16];
-  dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
-  char power[16];
-  dtostrfd(XDRV_101_ina219.busVoltage_V * XDRV_101_ina219.current_mA, Settings->flag2.wattage_resolution, power);
-  char name[16];
-  snprintf_P(name, sizeof(name), PSTR("%s"), XDRV_101_INA219_TYPE[0]);
-
-  if (json)
-  {
-    ResponseAppend_P(PSTR(",\"%s\":{\"Id\":%02x,\"" D_JSON_VOLTAGE "\":%s,\"" D_JSON_CURRENT "\":%s,\"" D_JSON_POWERUSAGE "\":%s}"),
-                     name, XDRV_101_I2C_ADDRESS, voltage, current, power);
-
-#ifdef USE_WEBSERVER
-  }
-  else
-  {
-    WSContentSend_PD(XDRV_101_HTTP_SNS_INA219_DATA, name, voltage, name, current, name, power);
-#endif // USE_WEBSERVER
-  }
 }
 
 void XDRV_101_show_TRV(bool json)
