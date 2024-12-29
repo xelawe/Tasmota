@@ -36,6 +36,23 @@
 #warning **** MLX90614 from tasmota was activated... ****
 #endif
 
+#ifdef MODULE
+#undef MODULE
+#endif
+#define MODULE                 USER_MODULE   // [Module] Select default model (the list is kModuleNiceList() in file tasmota_template.h) USER_MODULE is the TEMPLATE
+
+#ifdef FALLBACK_MODULE
+#undef FALLBACK_MODULE
+#endif
+#define FALLBACK_MODULE        USER_MODULE   // to Select the default model as FALLBACK when the user does a RESET 1 
+
+#ifdef USER_TEMPLATE
+#undef USER_TEMPLATE
+#endif
+#define USER_TEMPLATE          "{\"NAME\":\"cyTRV\",\"GPIO\":[1,1,576,1,640,608,1,1,162,1,161,1,1,1],\"FLAG\":0,\"BASE\":18}" // [Template] Set JSON template
+#warning **** User_Template cyTRV was activated... ****
+
+
 #define D_cyTRV "cyTRV"
 
 //*********************************************************************************************/
