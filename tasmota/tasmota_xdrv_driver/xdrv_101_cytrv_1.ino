@@ -31,6 +31,11 @@
 #warning **** DS18x20 from tasmota was activated... ****
 #endif
 
+#ifndef USE_MLX90614
+#define USE_MLX90614            // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
+#warning **** MLX90614 from tasmota was activated... ****
+#endif
+
 #define D_cyTRV "cyTRV"
 
 //*********************************************************************************************/
