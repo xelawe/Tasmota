@@ -628,7 +628,8 @@ void Xdrv_101_check_1s(void)
 {
   Xdrv_101_check_ina219();
   Xdrv_101_check_state_1s();
-  if (XDRV_101_mqtt.pub_sens){
+  if (XDRV_101_mqtt.pub_sens)
+  {
     MqttPublishSensor();
     XDRV_101_mqtt.pub_sens = false;
   }
@@ -639,6 +640,7 @@ void XDRV_101_show(bool json)
   XDRV_101_show_INA219(json);
   WSContentSeparator(0);
   XDRV_101_show_TRV(json);
+  XDRV_101_mqtt.pub_sens = false;
 }
 /*********************************************************************************************\
  * Interface
