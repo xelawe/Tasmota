@@ -680,6 +680,7 @@ void Xdrv_101_check_1s(void)
 void XDRV_101_show(bool json)
 {
   XDRV_101_show_INA219(json);
+  WSContentSeparator(0);
   XDRV_101_show_TRV(json);
 }
 
