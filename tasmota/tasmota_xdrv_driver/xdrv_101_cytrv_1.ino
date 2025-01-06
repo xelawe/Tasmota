@@ -611,40 +611,6 @@ void CmdTRVPos()
   ResponseCmndDone();
 }
 
-/* bool XDRV_101_Command(void)
-{
-  bool serviced = true;
-  char sub_string[XdrvMailbox.data_len];
-
-  // Command Calibration
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "CAL")) // Note 1 used for param number
-  {
-    XDRV_101_mqtt.cal = true;
-    AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command calibrate..."));
-    // Response_P(PSTR("{\"%s\":{\"Calibration\":\"OK\"}}"), "TRV");
-    ResponseCmndDone();
-    return serviced;
-  }
-
-  // Command Position
-  if (!strcmp(subStr(sub_string, XdrvMailbox.data, ",", 1), "POS")) // Note 1 used for param number
-  {
-    XDRV_101_motor.dest_pos = atoi(subStr(sub_string, XdrvMailbox.data, ",", 2)); // Note 2 used for param number
-
-    AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
-
-    char position[16];
-    dtostrfd(XDRV_101_motor.dest_pos, 0, position);
-
-    Response_P(PSTR("{\"%s\":{\"Position\":\"%s OK\"}}"), "TRV", position);
-    return serviced;
-  }
-
-  // Command unknown
-  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command unknown ..."));
-  Response_P(PSTR("{\"%s\":{\"Command\":\"Error\"}}"), "TRV");
-  return serviced;
-} */
 /*********************************************************************************************\
  * Tasmota Functions
 \*********************************************************************************************/
@@ -750,17 +716,6 @@ bool Xdrv101(uint32_t function)
       // AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
       result = DecodeCommand(MyProjectCommands, MyProjectCommand);
       break;
-
-      /*     case FUNC_COMMAND_DRIVER:
-            AddLog(LOG_LEVEL_INFO, PSTR("Calling Driver Command..."));
-            //      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-            if (XDRV_91 == XdrvMailbox.index)
-            {
-              AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command..."));
-              // result = DecodeCommand(MyProjectCommands, MyProjectCommand);
-              result = XDRV_101_Command(); // Return true on success
-            }
-            break; */
 
     case FUNC_ACTIVE:
       result = true;
