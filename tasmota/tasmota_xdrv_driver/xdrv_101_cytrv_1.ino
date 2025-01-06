@@ -589,7 +589,6 @@ void CmdTRVPos()
     MqttPublishSensor();
   }
 
-  // Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
   ResponseCmndDone();
 }
 
