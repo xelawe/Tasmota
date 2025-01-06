@@ -583,9 +583,9 @@ void CmdTRVPos()
   }
   else
   {
-    char position[16];
-    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
-    AddLog(LOG_LEVEL_INFO, position);
+//    char position[16];
+//    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
+//    AddLog(LOG_LEVEL_INFO, position);
     MqttPublishSensor();
   }
 
