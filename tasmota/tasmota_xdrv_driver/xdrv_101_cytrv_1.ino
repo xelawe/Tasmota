@@ -240,48 +240,7 @@ void Xdrv_101_check_ina219()
   XDRV_101_ina219.power_mW = ina219.getBusPower();
   XDRV_101_ina219.loadVoltage_V = XDRV_101_ina219.busVoltage_V + (XDRV_101_ina219.shuntVoltage_mV / 1000);
   XDRV_101_ina219.ina219_overflow = ina219.getOverflow();
-
-  //  Serial.print("Shunt Voltage [mV]: "); Serial.println(shuntVoltage_mV);
-  //  Serial.print("Bus Voltage [V]: "); Serial.println(busVoltage_V);
-  //  Serial.print("Load Voltage [V]: ");
-  //  Serial.print(loadVoltage_V);
-  //  Serial.print(" ");
-  //  Serial.print("Current[mA]: ");
-  //  Serial.print(current_mA);
-  //  Serial.print(" ");
-  //  // Serial.print("Bus Power [mW]: "); Serial.println(power_mW);
-  //  if (!ina219_overflow) {
-  //    Serial.println("Values OK - no overflow");
-  //  }
-  //  else {
-  //    Serial.println("Overflow! Choose higher PGAIN");
-  //  }
-  // Serial.println();
 }
-
-/* void Xdrv_101_print_ina219()
-{
-  if (XDRV_101_mqtt.log_mqtt == false)
-  {
-    return;
-  }
-
-  // Serial.print("Load Voltage [V]: ");
-  // Serial.print(loadVoltage_V);
-  // Serial.print(" ");
-  // Serial.print("Current[mA]: ");
-  // Serial.print(current_mA);
-  // Serial.print(" ");
-  // Serial.print("Bus Power [mW]: "); Serial.println(power_mW);
-  if (!XDRV_101_ina219.ina219_overflow)
-  {
-    // Serial.println("Values OK - no overflow");
-  }
-  else
-  {
-    // Serial.println("Overflow! Choose higher PGAIN");
-  }
-} */
 
 void XDRV_101_show_INA219(bool json)
 {
@@ -490,8 +449,6 @@ void Xdrv_101_check_state(void)
     break;
   }
 
-  // Serial.println();
-
   if (XDRV_101_state.state_old != XDRV_101_state.state)
   {
     XDRV_101_mqtt.pub_sens = true;
@@ -671,6 +628,9 @@ void Xdrv_101_check_1s(void)
 {
   Xdrv_101_check_ina219();
   Xdrv_101_check_state_1s();
+  if (XDRV_101_mqtt.pub_sens){
+    MqttPublishSensor();
+  }
 }
 
 void XDRV_101_show(bool json)
