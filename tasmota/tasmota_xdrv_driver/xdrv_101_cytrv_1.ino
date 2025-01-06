@@ -21,37 +21,36 @@
 #endif
 
 #ifndef USE_BH1750
-#define USE_BH1750      // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
+#define USE_BH1750 // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
 #warning **** BH1750 from tasmota was activated... ****
 #endif
 
 #ifndef USE_DS18x20
-#define USE_DS18x20               // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
+#define USE_DS18x20 // Add support for DS18x20 sensors with id sort, single scan and read retry (+2k6 code)
 //  #define W1_PARASITE_POWER     // Optimize for parasite powered sensors
 #warning **** DS18x20 from tasmota was activated... ****
 #endif
 
 #ifndef USE_MLX90614
-#define USE_MLX90614            // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
+#define USE_MLX90614 // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 #warning **** MLX90614 from tasmota was activated... ****
 #endif
 
 #ifdef MODULE
 #undef MODULE
 #endif
-#define MODULE                 USER_MODULE   // [Module] Select default model (the list is kModuleNiceList() in file tasmota_template.h) USER_MODULE is the TEMPLATE
+#define MODULE USER_MODULE // [Module] Select default model (the list is kModuleNiceList() in file tasmota_template.h) USER_MODULE is the TEMPLATE
 
 #ifdef FALLBACK_MODULE
 #undef FALLBACK_MODULE
 #endif
-#define FALLBACK_MODULE        USER_MODULE   // to Select the default model as FALLBACK when the user does a RESET 1 
+#define FALLBACK_MODULE USER_MODULE // to Select the default model as FALLBACK when the user does a RESET 1
 
 #ifdef USER_TEMPLATE
 #undef USER_TEMPLATE
 #endif
-#define USER_TEMPLATE          "{\"NAME\":\"cyTRV\",\"GPIO\":[1,1,576,1,640,608,1,1,162,1312,161,1,1,1],\"FLAG\":0,\"BASE\":18}" // [Template] Set JSON template
+#define USER_TEMPLATE "{\"NAME\":\"cyTRV\",\"GPIO\":[1,1,576,1,640,608,1,1,162,1312,161,1,1,1],\"FLAG\":0,\"BASE\":18}" // [Template] Set JSON template
 #warning **** User_Template cyTRV was activated... ****
-
 
 #define D_cyTRV "cyTRV"
 
@@ -597,12 +596,18 @@ void CmdTRVCal(void)
 void CmdTRVPos()
 {
   // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
-  XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
+  if (XdrvMailbox.payload >= 0)
+  {
+    XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
+  }
+  else
+  {
+    char position[16];
+    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
+    AddLog(LOG_LEVEL_INFO, position);
+  }
 
-  char position[16];
-  dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
-  AddLog(LOG_LEVEL_INFO, position);
-  //Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
+  // Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
   ResponseCmndDone();
 }
 
