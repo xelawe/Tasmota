@@ -630,6 +630,7 @@ void Xdrv_101_check_1s(void)
   Xdrv_101_check_state_1s();
   if (XDRV_101_mqtt.pub_sens){
     MqttPublishSensor();
+    XDRV_101_mqtt.pub_sens = false;
   }
 }
 
