@@ -371,8 +371,8 @@ void Xdrv_101_check_state(void)
     {
       Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 0;
-      Serial.print("Max time: ");
-      Serial.println(XDRV_101_state.max_time);
+//      Serial.print("Max time: ");
+//      Serial.println(XDRV_101_state.max_time);
     }
     break;
   case 6: // do positioning
