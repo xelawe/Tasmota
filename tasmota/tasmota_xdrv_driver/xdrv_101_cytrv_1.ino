@@ -161,14 +161,10 @@ bool Xdrv_101_init_ina219()
 
   if (!ina219.init())
   {
-    // Serial.println("INA219 not connected!");
     return XDRV_101_ina219.active;
   }
-  // else
-  //{
-  //  Serial.println("INA219 connected!");
+
   I2cSetActiveFound(XDRV_101_I2C_ADDRESS, XDRV_101_INA219_TYPE[0]);
-  //}
 
   /* Set ADC Mode for Bus and ShuntVoltage
     Mode *            * Res / Samples *       * Conversion Time
@@ -299,17 +295,13 @@ void XDRV_101_show_TRV(bool json)
 #endif // USE_WEBSERVER
   }
 }
+
 //*********************************************************************************************/
 // State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
 
 void Xdrv_101_check_state(void)
 {
-
-  /*
-    Here goes My Project code.
-    Usually this part is included into loop() function
-  */
 
   XDRV_101_state.state_old = XDRV_101_state.state;
 
@@ -371,8 +363,6 @@ void Xdrv_101_check_state(void)
     {
       Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 0;
-//      Serial.print("Max time: ");
-//      Serial.println(XDRV_101_state.max_time);
     }
     break;
   case 6: // do positioning
@@ -583,9 +573,9 @@ void CmdTRVPos()
   }
   else
   {
-//    char position[16];
-//    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
-//    AddLog(LOG_LEVEL_INFO, position);
+    //    char position[16];
+    //    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
+    //    AddLog(LOG_LEVEL_INFO, position);
     MqttPublishSensor();
   }
 
@@ -598,12 +588,6 @@ void CmdTRVPos()
 
 void XDRV_101_Init()
 {
-
-  /*
-    Here goes My Project setting.
-    Usually this part is included into setup() function
-  */
-
   AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV " init..."));
 
   // Serial.begin(115200);
@@ -668,7 +652,6 @@ bool Xdrv101(uint32_t function)
       //    case FUNC_EVERY_100_MSECOND:
 
     case FUNC_EVERY_50_MSECOND:
-      // MyProjectProcessing();
       Xdrv_101_check_state();
       break;
 
