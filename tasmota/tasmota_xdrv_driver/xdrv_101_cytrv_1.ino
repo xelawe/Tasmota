@@ -602,8 +602,8 @@ void CmdTRVPos()
   char position[16];
   dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
   AddLog(LOG_LEVEL_INFO, position);
-  Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
-  // ResponseCmndDone();
+  //Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
+  ResponseCmndDone();
 }
 
 /* bool XDRV_101_Command(void)
