@@ -315,7 +315,31 @@ void XDRV_101_show_INA219(bool json)
 //*********************************************************************************************/
 // MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
+void XDRV_101_show_TRV(bool json)
+{
+  char position[16];
+  dtostrfd(XDRV_101_motor.act_pos, 0, position);
+  // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
+  char state[16];
+  dtostrfd(XDRV_101_state.state, 0, state);
+  char max_time[16];
+  dtostrfd(XDRV_101_state.max_time, 0, max_time);
+  char name[16];
+  snprintf_P(name, sizeof(name), PSTR("%s"), D_cyTRV);
 
+  if (json)
+  {
+    ResponseAppend_P(PSTR(",\"%s\":{\"Position\":%s,\"State\":%s,\"Max_Time\":%s}"),
+                     name, position, state, max_time);
+
+#ifdef USE_WEBSERVER
+  }
+  else
+  {
+    WSContentSend_PD(XDRV_101_HTTP_SNS_TRV_DATA, name, position, name, state, name, max_time);
+#endif // USE_WEBSERVER
+  }
+}
 //*********************************************************************************************/
 // State part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -605,6 +629,7 @@ void CmdTRVPos()
     char position[16];
     dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
     AddLog(LOG_LEVEL_INFO, position);
+    MqttPublishSensor();
   }
 
   // Response_P(PSTR("{\"%s\":{\"Command\":\"OK\",\"Position\":\"%s\"}}"), D_cyTRV, position);
@@ -653,32 +678,6 @@ void XDRV_101_show(bool json)
   XDRV_101_show_INA219(json);
   WSContentSeparator(0);
   XDRV_101_show_TRV(json);
-}
-
-void XDRV_101_show_TRV(bool json)
-{
-  char position[16];
-  dtostrfd(XDRV_101_motor.act_pos, 0, position);
-  // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
-  char state[16];
-  dtostrfd(XDRV_101_state.state, 0, state);
-  char max_time[16];
-  dtostrfd(XDRV_101_state.max_time, 0, max_time);
-  char name[16];
-  snprintf_P(name, sizeof(name), PSTR("%s"), D_cyTRV);
-
-  if (json)
-  {
-    ResponseAppend_P(PSTR(",\"%s\":{\"Position\":%s,\" State \":%s,\" Max_Time \":%s}"),
-                     name, position, state, max_time);
-
-#ifdef USE_WEBSERVER
-  }
-  else
-  {
-    WSContentSend_PD(XDRV_101_HTTP_SNS_TRV_DATA, name, position, name, state, name, max_time);
-#endif // USE_WEBSERVER
-  }
 }
 /*********************************************************************************************\
  * Interface
