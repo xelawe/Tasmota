@@ -314,7 +314,7 @@ void XDRV_101_show_TRV(bool json)
   }
   else
   {
-    snprintf_P(position, sizeof(position), PSTR("%s"), "-");
+    snprintf_P(position, sizeof(position), PSTR("%s"), "--");
   }
 
   char state[16];
@@ -414,6 +414,8 @@ void XDRV_101_init_motor()
   if ((PinUsed(GPIO_REL1, 0)) && (PinUsed(GPIO_REL1, 1)))
   {
     XDRV_101_motor.init = true;
+  } else {
+      AddLog(LOG_LEVEL_INFO, PSTR("Motor: Define Rlay Pins!"));
   }
 #endif // USE_CYTRV_2
 
