@@ -88,8 +88,8 @@ Examples :
 */
 
 
-#define USE_CYTRV_1
-//#define USE_INA219                             // [I2cDriver14] Enable INA219 (I2C address 0x40, 0x41 0x44 or 0x45) Low voltage and current sensor (+1k code)
+//#define USE_CYTRV_1
 
+#define USE_CYTRV_2
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
