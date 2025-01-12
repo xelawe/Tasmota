@@ -4,7 +4,8 @@
 
 #ifdef USE_I2C
 
-#ifdef USE_CYTRV_1
+#ifdef USE_CYTRV
+
 /*********************************************************************************************\
  * TRV driver
  *
@@ -15,10 +16,25 @@
 
 #define XDRV_101 101
 
+#ifdef USE_CYTRV_1
+#ifdef USE_CYTRV_2
+#error **** cyTRV: selct only one version! ****
+#endif
+#define xdrv_101_ina219
+#endif
+
+#ifdef USE_CYTRV_2
+#define xdrv_101_ina219
+#endif
+
+#ifdef xdrv_101_ina219
 #ifdef USE_INA219
 #undef USE_INA219
 #warning **** INA219 from tasmota was deactivated... ****
 #endif
+#endif
+
+#ifdef USE_CYSHUTTER_1
 
 #ifndef USE_BH1750
 #define USE_BH1750 // [I2cDriver11] Enable BH1750 sensor (I2C address 0x23 or 0x5C) (+0k5 code)
@@ -34,6 +50,8 @@
 #ifndef USE_MLX90614
 #define USE_MLX90614 // [I2cDriver32] Enable MLX90614 ir temp sensor (I2C address 0x5a) (+0.6k code)
 #warning **** MLX90614 from tasmota was activated... ****
+#endif
+
 #endif
 
 #ifdef MODULE
@@ -54,6 +72,7 @@
 
 #define D_cyTRV "cyTRV"
 
+#ifdef xdrv_101_ina219
 //*********************************************************************************************/
 // INA219 decl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -91,6 +110,8 @@ const char XDRV_101_HTTP_SNS_INA219_DATA[] PROGMEM =
     "{s}%s " D_POWERUSAGE "{m}%s " D_UNIT_WATT "{e}";
 #endif // USE_WEBSERVER
 
+#endif // xdrv_101_ina219
+
 //*********************************************************************************************/
 // MQTT decl  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -125,11 +146,20 @@ struct XDRV_101_STATE
 // Motor decl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
 
+#ifdef USE_CYTRV_1
+
 #include "WEMOS_Motor.h"
 // Motor shield I2C Address: 0x30
 // PWM frequency: 1000Hz(1kHz)
 // Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
 Motor *XDRV_101_Ventil;
+
+#else
+#define _CCW 1
+#define _CW 2
+#define _STOP 3
+#define _STANDBY 4
+#endif // USE_CYTRV_1
 
 struct XDRV_101_MOTOR
 {
@@ -151,6 +181,7 @@ const char XDRV_101_HTTP_SNS_TRV_DATA[] PROGMEM =
     "{s}%s  max_time {m}%s " D_UNIT_SECOND " {e}";
 #endif // USE_WEBSERVER
 
+#ifdef xdrv_101_ina219
 /*********************************************************************************************/
 // INA219 part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -267,6 +298,9 @@ void XDRV_101_show_INA219(bool json)
 #endif // USE_WEBSERVER
   }
 }
+
+#endif // xdrv_101_ina219
+
 //*********************************************************************************************/
 // MQTT part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -294,6 +328,84 @@ void XDRV_101_show_TRV(bool json)
     WSContentSend_PD(XDRV_101_HTTP_SNS_TRV_DATA, name, position, name, state, name, max_time);
 #endif // USE_WEBSERVER
   }
+}
+
+//*********************************************************************************************/
+// Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//*********************************************************************************************/
+void XDRV_101_motor_start(uint8_t dir, float pwm_val)
+{
+#ifdef USE_CYTRV_1
+  XDRV_101_Ventil->setmotor(dir, pwm_val);
+#endif // USE_CYTRV_1
+
+#ifdef USE_CYTRV_2
+  if (dir == _CW)
+  {
+    ExecuteCommandPower(1, 1, SRC_IGNORE);
+    ExecuteCommandPower(2, 0, SRC_IGNORE);
+  }
+  else
+  {
+    ExecuteCommandPower(1, 0, SRC_IGNORE);
+    ExecuteCommandPower(2, 1, SRC_IGNORE);
+  }
+// void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
+//  device  = Relay number 1 and up
+//  state 0 = POWER_OFF = Relay Off
+//  state 1 = POWER_ON = Relay On (turn off after Settings->pulse_timer * 100 mSec if enabled)
+//  state 2 = POWER_TOGGLE = Toggle relay
+//  state 3 = POWER_BLINK = Blink relay
+//  state 4 = POWER_BLINK_STOP = Stop blinking relay
+//  state 5 = POWER_OFF_FORCE = Relay off even if locked
+//  state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
+//  state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
+//  state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
+//  state 16 = POWER_SHOW_STATE = Show power state
+
+//  ShowSource(source);
+#endif // USE_CYTRV_2
+
+  XDRV_101_motor.run = true;
+
+  if (dir == _CW)
+  {
+    XDRV_101_motor.dir = true;
+  }
+  else
+  {
+    XDRV_101_motor.dir = false;
+  }
+}
+
+void XDRV_101_motor_stop()
+{
+#ifdef USE_CYTRV_1
+  XDRV_101_Ventil->setmotor(_STOP);
+#endif // USE_CYTRV_1
+
+#ifdef USE_CYTRV_2
+  ExecuteCommandPower(1, 0, SRC_IGNORE);
+  ExecuteCommandPower(2, 0, SRC_IGNORE);
+#endif // USE_CYTRV_2
+
+  XDRV_101_motor.run = false;
+}
+
+void XDRV_101_init_motor()
+{
+#ifdef USE_CYTRV_1
+  XDRV_101_Ventil = new Motor(0x30, _MOTOR_B, 1000); // Motor B
+#endif                                               // USE_CYTRV_1
+  XDRV_101_motor_stop_all();
+}
+
+void XDRV_101_motor_stop_all()
+{
+#ifdef USE_CYTRV_1
+  XDRV_101_Ventil->setmotor(_STOP);
+#endif // USE_CYTRV_1
+  XDRV_101_motor.run = false;
 }
 
 //*********************************************************************************************/
@@ -337,22 +449,17 @@ void Xdrv_101_check_state(void)
     break;
   case 2: // do calibration
     XDRV_101_motor.act_pos = -1;
-    XDRV_101_Ventil->setmotor(_CW, 100);
-    XDRV_101_motor.dir = true;
-    XDRV_101_motor.run = true;
+    XDRV_101_motor_start(_CW, 100);
     XDRV_101_state.state = 3;
   case 3: // calibration opening
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
-      XDRV_101_Ventil->setmotor(_STOP);
-      XDRV_101_motor.run = false;
+      XDRV_101_motor_stop();
       XDRV_101_state.state = 4;
     }
     break;
   case 4: // do calibration close
-    XDRV_101_Ventil->setmotor(_CCW, 100);
-    XDRV_101_motor.dir = false;
-    XDRV_101_motor.run = true;
+    XDRV_101_motor_start(_CCW, 100);
     XDRV_101_state.max_time = 0;
     XDRV_101_state.state = 5;
 
@@ -382,9 +489,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      XDRV_101_Ventil->setmotor(_CCW, 100);
-      XDRV_101_motor.dir = false;
-      XDRV_101_motor.run = true;
+      XDRV_101_motor_start(_CCW, 100);
       XDRV_101_state.state = 7;
     }
     else
@@ -395,9 +500,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.old_millis = millis();
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
-      XDRV_101_Ventil->setmotor(_CW, 100);
-      XDRV_101_motor.dir = true;
-      XDRV_101_motor.run = true;
+      XDRV_101_motor_start(_CW, 100);
       XDRV_101_state.state = 8;
     }
     // gv_pos_time = gv_max_time - map(gv_dest_pos, 0, 100, gv_max_time, 0);
@@ -466,8 +569,7 @@ void Xdrv_101_check_state_1s()
 
 void Xdrv_101_state_motor_stop()
 {
-  XDRV_101_Ventil->setmotor(_STOP);
-  XDRV_101_motor.run = false;
+  XDRV_101_motor_stop();
   XDRV_101_state.state = 1;
   XDRV_101_mqtt.pub_sens = true;
   Xdrv_101_check_ina219();
@@ -478,22 +580,6 @@ void Xdrv_101_init_state()
   XDRV_101_state.state = 0;
   XDRV_101_state.max_time = 46;
   // set_state_tact();
-}
-
-//*********************************************************************************************/
-// Motor part ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//*********************************************************************************************/
-void XDRV_101_init_motor()
-{
-  XDRV_101_Ventil = new Motor(0x30, _MOTOR_B, 1000); // Motor B
-
-  XDRV_101_motor_stop_all();
-}
-
-void XDRV_101_motor_stop_all()
-{
-  XDRV_101_Ventil->setmotor(_STOP);
-  XDRV_101_motor.run = false;
 }
 
 /*********************************************************************************************\
