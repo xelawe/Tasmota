@@ -165,6 +165,7 @@ struct XDRV_101_MOTOR
 {
   int pwm;
 
+  boolean init = false;
   boolean run = false;
   boolean dir = false;
 
@@ -306,9 +307,12 @@ void XDRV_101_show_INA219(bool json)
 //*********************************************************************************************/
 void XDRV_101_show_TRV(bool json)
 {
-  char position[16];
-  dtostrfd(XDRV_101_motor.act_pos, 0, position);
-  // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
+  if (XDRV_101_motor.init)
+  {
+    char position[16];
+    dtostrfd(XDRV_101_motor.act_pos, 0, position);
+    // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
+  }
   char state[16];
   dtostrfd(XDRV_101_state.state, 0, state);
   char max_time[16];
@@ -396,7 +400,17 @@ void XDRV_101_init_motor()
 {
 #ifdef USE_CYTRV_1
   XDRV_101_Ventil = new Motor(0x30, _MOTOR_B, 1000); // Motor B
-#endif                                               // USE_CYTRV_1
+  XDRV_101_motor.init = true;
+#endif // USE_CYTRV_1
+
+#ifdef USE_CYTRV_2
+  // relais assigned
+  if ((PinUsed(GPIO_REL1, 0)) && (PinUsed(GPIO_REL1, 1)))
+  {
+    XDRV_101_motor.init = true;
+  }
+#endif // USE_CYTRV_2
+
   XDRV_101_motor_stop_all();
 }
 
