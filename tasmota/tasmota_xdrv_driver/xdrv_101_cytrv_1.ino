@@ -307,16 +307,22 @@ void XDRV_101_show_INA219(bool json)
 //*********************************************************************************************/
 void XDRV_101_show_TRV(bool json)
 {
+  char position[16];
   if (XDRV_101_motor.init)
   {
-    char position[16];
     dtostrfd(XDRV_101_motor.act_pos, 0, position);
-    // dtostrfd(XDRV_101_ina219.busVoltage_V, 0, position);
   }
+  else
+  {
+    snprintf_P(position, sizeof(position), PSTR("%s"), "-");
+  }
+
   char state[16];
   dtostrfd(XDRV_101_state.state, 0, state);
+
   char max_time[16];
   dtostrfd(XDRV_101_state.max_time, 0, max_time);
+
   char name[16];
   snprintf_P(name, sizeof(name), PSTR("%s"), D_cyTRV);
 
