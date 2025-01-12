@@ -314,7 +314,7 @@ void XDRV_101_show_TRV(bool json)
   }
   else
   {
-    snprintf_P(position, sizeof(position), PSTR("%s"), "--");
+    snprintf_P(position, sizeof(position), PSTR("%s"), "Define Relay Pins!");
   }
 
   char state[16];
@@ -352,13 +352,13 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
 #ifdef USE_CYTRV_2
   if (dir == _CW)
   {
-    ExecuteCommandPower(1, 1, SRC_IGNORE);
-    ExecuteCommandPower(2, 0, SRC_IGNORE);
+    ExecuteCommandPower(1, 1, SRC_MQTT);
+    ExecuteCommandPower(2, 0, SRC_MQTT);
   }
   else
   {
-    ExecuteCommandPower(1, 0, SRC_IGNORE);
-    ExecuteCommandPower(2, 1, SRC_IGNORE);
+    ExecuteCommandPower(1, 0, SRC_MQTT);
+    ExecuteCommandPower(2, 1, SRC_MQTT);
   }
 // void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
 //  device  = Relay number 1 and up
@@ -395,8 +395,8 @@ void XDRV_101_motor_stop()
 #endif // USE_CYTRV_1
 
 #ifdef USE_CYTRV_2
-  ExecuteCommandPower(1, 0, SRC_IGNORE);
-  ExecuteCommandPower(2, 0, SRC_IGNORE);
+  ExecuteCommandPower(1, 0, SRC_MQTT);
+  ExecuteCommandPower(2, 0, SRC_MQTT);
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = false;
@@ -414,8 +414,6 @@ void XDRV_101_init_motor()
   if ((PinUsed(GPIO_REL1, 0)) && (PinUsed(GPIO_REL1, 1)))
   {
     XDRV_101_motor.init = true;
-  } else {
-      AddLog(LOG_LEVEL_INFO, PSTR("Motor: Define Rlay Pins!"));
   }
 #endif // USE_CYTRV_2
 
@@ -427,6 +425,12 @@ void XDRV_101_motor_stop_all()
 #ifdef USE_CYTRV_1
   XDRV_101_Ventil->setmotor(_STOP);
 #endif // USE_CYTRV_1
+
+#ifdef USE_CYTRV_2
+  ExecuteCommandPower(1, 0, SRC_MQTT);
+  ExecuteCommandPower(2, 0, SRC_MQTT);
+#endif // USE_CYTRV_2
+
   XDRV_101_motor.run = false;
 }
 
@@ -600,7 +604,12 @@ void Xdrv_101_state_motor_stop()
 void Xdrv_101_init_state()
 {
   XDRV_101_state.state = 0;
+#ifdef USE_CYTRV_1
   XDRV_101_state.max_time = 46;
+#endif
+#ifdef USE_CYTRV_2
+  XDRV_101_state.max_time = 68;
+#endif
   // set_state_tact();
 }
 
@@ -674,18 +683,19 @@ void CmdTRVCal(void)
 // Command Position
 void CmdTRVPos()
 {
-  // AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
   if (XdrvMailbox.payload >= 0)
   {
     XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
   }
   else
   {
-    //    char position[16];
-    //    dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
-    //    AddLog(LOG_LEVEL_INFO, position);
     MqttPublishSensor();
   }
+
+  char position[16];
+  dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
+  AddLog(LOG_LEVEL_INFO, position);
 
   ResponseCmndDone();
 }
