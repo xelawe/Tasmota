@@ -395,8 +395,8 @@ void XDRV_101_motor_stop()
 #endif // USE_CYTRV_1
 
 #ifdef USE_CYTRV_2
-  ExecuteCommandPower(1, 0, SRC_MQTT);
-  ExecuteCommandPower(2, 0, SRC_MQTT);
+  ExecuteCommandPower(1, 0, SRC_SWITCH);
+  ExecuteCommandPower(2, 0, SRC_SWITCH);
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = false;
@@ -422,16 +422,7 @@ void XDRV_101_init_motor()
 
 void XDRV_101_motor_stop_all()
 {
-#ifdef USE_CYTRV_1
-  XDRV_101_Ventil->setmotor(_STOP);
-#endif // USE_CYTRV_1
-
-#ifdef USE_CYTRV_2
-  ExecuteCommandPower(1, 0, SRC_MQTT);
-  ExecuteCommandPower(2, 0, SRC_MQTT);
-#endif // USE_CYTRV_2
-
-  XDRV_101_motor.run = false;
+  XDRV_101_motor_stop();
 }
 
 //*********************************************************************************************/
