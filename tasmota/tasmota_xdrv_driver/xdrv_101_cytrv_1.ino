@@ -99,8 +99,12 @@ struct XDRV_101_INA219
   float current_mA = 0.0;
   float power_mW = 0.0;
   bool overflow = false;
-
+#ifdef USE_CYTRV_1
   float max_curr = 40;
+#endif // USE_CYTRV_1
+#ifdef USE_CYTRV_2
+  float max_curr = 50;
+#endif // USE_CYTRV_2
 } XDRV_101_ina219;
 
 #ifdef USE_WEBSERVER
@@ -441,7 +445,7 @@ void Xdrv_101_check_state(void)
 
   XDRV_101_state.state_old = XDRV_101_state.state;
 
-  if ((XDRV_101_state.state != 1) && XDRV_101_motor.started == true )
+  if ((XDRV_101_state.state != 1) && XDRV_101_motor.started == true)
   {
     Xdrv_101_check_ina219();
   }
@@ -514,7 +518,16 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
       XDRV_101_motor_start(_CCW, 100);
-      XDRV_101_state.state = 7;
+      if (XDRV_101_motor.dest_pos == 0)
+      {
+        // close till max current
+        XDRV_101_state.state = 5;
+      }
+      else
+      {
+        // drive to position
+        XDRV_101_state.state = 7;
+      }
     }
     else
     {
@@ -533,6 +546,7 @@ void Xdrv_101_check_state(void)
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
       float curr = XDRV_101_ina219.current_mA;
+
       Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 0;
 
@@ -584,6 +598,8 @@ void Xdrv_101_check_state(void)
 
   if (XDRV_101_state.state_old != XDRV_101_state.state)
   {
+    XDRV_101_mqtt.pub_sens = true;
+
     AddLog(LOG_LEVEL_INFO, PSTR("State changed ..."));
 
     char state[16];
@@ -592,8 +608,6 @@ void Xdrv_101_check_state(void)
     AddLog(LOG_LEVEL_INFO, PSTR(" --> "));
     dtostrfd(XDRV_101_state.state, 0, state);
     AddLog(LOG_LEVEL_INFO, state);
-
-    XDRV_101_mqtt.pub_sens = true;
   }
 }
 
@@ -789,7 +803,7 @@ bool Xdrv101(uint32_t function)
       Xdrv_101_check_1s();
 
       //    case FUNC_EVERY_250_MSECOND:
-          case FUNC_EVERY_200_MSECOND:
+    case FUNC_EVERY_200_MSECOND:
 
       if (XDRV_101_motor.run == true)
       {
@@ -810,7 +824,7 @@ bool Xdrv101(uint32_t function)
       }
 
       break;
-          //case FUNC_EVERY_100_MSECOND:
+      // case FUNC_EVERY_100_MSECOND:
     case FUNC_EVERY_50_MSECOND:
       Xdrv_101_check_state();
       break;
