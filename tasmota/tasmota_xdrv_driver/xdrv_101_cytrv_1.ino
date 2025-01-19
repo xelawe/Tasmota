@@ -98,9 +98,9 @@ struct XDRV_101_INA219
   float busVoltage_V = 0.0;
   float current_mA = 0.0;
   float power_mW = 0.0;
-  bool ina219_overflow = false;
+  bool overflow = false;
 
-  float max_curr = 50;
+  float max_curr = 40;
 } XDRV_101_ina219;
 
 #ifdef USE_WEBSERVER
@@ -168,6 +168,8 @@ struct XDRV_101_MOTOR
   boolean init = false;
   boolean run = false;
   boolean dir = false;
+  boolean starting = false;
+  boolean started = false;
 
   int act_pos;
   int dest_pos;
@@ -267,7 +269,7 @@ void Xdrv_101_check_ina219()
   XDRV_101_ina219.current_mA = ina219.getCurrent_mA();
   XDRV_101_ina219.power_mW = ina219.getBusPower();
   XDRV_101_ina219.loadVoltage_V = XDRV_101_ina219.busVoltage_V + (XDRV_101_ina219.shuntVoltage_mV / 1000);
-  XDRV_101_ina219.ina219_overflow = ina219.getOverflow();
+  XDRV_101_ina219.overflow = ina219.getOverflow();
 }
 
 void XDRV_101_show_INA219(bool json)
@@ -350,33 +352,37 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
 #endif // USE_CYTRV_1
 
 #ifdef USE_CYTRV_2
+  // void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
+  //  device  = Relay number 1 and up
+  //  state 0 = POWER_OFF = Relay Off
+  //  state 1 = POWER_ON = Relay On (turn off after Settings->pulse_timer * 100 mSec if enabled)
+  //  state 2 = POWER_TOGGLE = Toggle relay
+  //  state 3 = POWER_BLINK = Blink relay
+  //  state 4 = POWER_BLINK_STOP = Stop blinking relay
+  //  state 5 = POWER_OFF_FORCE = Relay off even if locked
+  //  state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
+  //  state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
+  //  state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
+  //  state 16 = POWER_SHOW_STATE = Show power state
+
+  //  ShowSource(source);
   if (dir == _CW)
   {
-    ExecuteCommandPower(1, 1, SRC_MQTT);
-    ExecuteCommandPower(2, 0, SRC_MQTT);
+    ExecuteCommandPower(1, POWER_ON, SRC_SHUTTER);
+    ExecuteCommandPower(2, POWER_OFF, SRC_SHUTTER);
   }
   else
   {
-    ExecuteCommandPower(1, 0, SRC_MQTT);
-    ExecuteCommandPower(2, 1, SRC_MQTT);
+    ExecuteCommandPower(1, POWER_OFF, SRC_SHUTTER);
+    ExecuteCommandPower(2, POWER_ON, SRC_SHUTTER);
   }
-// void ExecuteCommandPower(uint32_t device, uint32_t state, uint32_t source)
-//  device  = Relay number 1 and up
-//  state 0 = POWER_OFF = Relay Off
-//  state 1 = POWER_ON = Relay On (turn off after Settings->pulse_timer * 100 mSec if enabled)
-//  state 2 = POWER_TOGGLE = Toggle relay
-//  state 3 = POWER_BLINK = Blink relay
-//  state 4 = POWER_BLINK_STOP = Stop blinking relay
-//  state 5 = POWER_OFF_FORCE = Relay off even if locked
-//  state 8 = POWER_OFF_NO_STATE = Relay Off and no publishPowerState
-//  state 9 = POWER_ON_NO_STATE = Relay On and no publishPowerState
-//  state 10 = POWER_TOGGLE_NO_STATE = Toggle relay and no publishPowerState
-//  state 16 = POWER_SHOW_STATE = Show power state
+  TasmotaGlobal.last_source = SRC_SHUTTER;
 
-//  ShowSource(source);
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = true;
+  XDRV_101_motor.starting = false;
+  XDRV_101_motor.started = false;
 
   if (dir == _CW)
   {
@@ -395,8 +401,9 @@ void XDRV_101_motor_stop()
 #endif // USE_CYTRV_1
 
 #ifdef USE_CYTRV_2
-  ExecuteCommandPower(1, 0, SRC_SWITCH);
-  ExecuteCommandPower(2, 0, SRC_SWITCH);
+  ExecuteCommandPower(1, POWER_OFF, SRC_SHUTTER);
+  ExecuteCommandPower(2, POWER_OFF, SRC_SHUTTER);
+  TasmotaGlobal.last_source = SRC_SHUTTER;
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = false;
@@ -411,7 +418,7 @@ void XDRV_101_init_motor()
 
 #ifdef USE_CYTRV_2
   // relais assigned
-  if ((PinUsed(GPIO_REL1, 0)) && (PinUsed(GPIO_REL1, 1)))
+  if (PinUsed(GPIO_REL1, 0) && PinUsed(GPIO_REL1, 1))
   {
     XDRV_101_motor.init = true;
   }
@@ -434,7 +441,7 @@ void Xdrv_101_check_state(void)
 
   XDRV_101_state.state_old = XDRV_101_state.state;
 
-  if (XDRV_101_state.state != 1)
+  if ((XDRV_101_state.state != 1) && XDRV_101_motor.started == true )
   {
     Xdrv_101_check_ina219();
   }
@@ -525,8 +532,16 @@ void Xdrv_101_check_state(void)
   case 7: // go to position closing
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
+      float curr = XDRV_101_ina219.current_mA;
       Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 0;
+
+      AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
+      char current[16];
+      dtostrfd(curr, 0, current);
+      AddLog(LOG_LEVEL_INFO, current);
+      dtostrfd(XDRV_101_ina219.max_curr, 0, current);
+      AddLog(LOG_LEVEL_INFO, current);
       break;
     }
 
@@ -542,9 +557,17 @@ void Xdrv_101_check_state(void)
   case 8: // go to position opening
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
+      float curr = XDRV_101_ina219.current_mA;
+
       Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 100;
 
+      AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
+      char current[16];
+      dtostrfd(curr, 0, current);
+      AddLog(LOG_LEVEL_INFO, current);
+      dtostrfd(XDRV_101_ina219.max_curr, 0, current);
+      AddLog(LOG_LEVEL_INFO, current);
       break;
     }
 
@@ -561,6 +584,15 @@ void Xdrv_101_check_state(void)
 
   if (XDRV_101_state.state_old != XDRV_101_state.state)
   {
+    AddLog(LOG_LEVEL_INFO, PSTR("State changed ..."));
+
+    char state[16];
+    dtostrfd(XDRV_101_state.state_old, 0, state);
+    AddLog(LOG_LEVEL_INFO, state);
+    AddLog(LOG_LEVEL_INFO, PSTR(" --> "));
+    dtostrfd(XDRV_101_state.state, 0, state);
+    AddLog(LOG_LEVEL_INFO, state);
+
     XDRV_101_mqtt.pub_sens = true;
   }
 }
@@ -757,9 +789,28 @@ bool Xdrv101(uint32_t function)
       Xdrv_101_check_1s();
 
       //    case FUNC_EVERY_250_MSECOND:
-      //    case FUNC_EVERY_200_MSECOND:
-      //    case FUNC_EVERY_100_MSECOND:
+          case FUNC_EVERY_200_MSECOND:
 
+      if (XDRV_101_motor.run == true)
+      {
+        if (XDRV_101_motor.started == true)
+        {
+          break;
+        }
+        if (XDRV_101_motor.starting == false)
+        {
+          XDRV_101_motor.starting = true;
+          break;
+        }
+        if (XDRV_101_motor.started == false)
+        {
+          XDRV_101_motor.started = true;
+          break;
+        }
+      }
+
+      break;
+          //case FUNC_EVERY_100_MSECOND:
     case FUNC_EVERY_50_MSECOND:
       Xdrv_101_check_state();
       break;
