@@ -493,7 +493,7 @@ void Xdrv_101_check_state(void)
 
     break;
 
-  case 5: // calibration closing
+  case 5: // (calibration) closing
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
       Xdrv_101_state_motor_stop();
@@ -543,21 +543,26 @@ void Xdrv_101_check_state(void)
     // gv_pos_time = gv_max_time - map(gv_dest_pos, 0, 100, gv_max_time, 0);
     break;
   case 7: // go to position closing
-    if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
+      if (XDRV_101_state_check_overcurr())
     {
-      float curr = XDRV_101_ina219.current_mA;
-
-      Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 0;
-
-      AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
-      char current[16];
-      dtostrfd(curr, 0, current);
-      AddLog(LOG_LEVEL_INFO, current);
-      dtostrfd(XDRV_101_ina219.max_curr, 0, current);
-      AddLog(LOG_LEVEL_INFO, current);
       break;
-    }
+    };
+    // if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
+    // {
+    //   float curr = XDRV_101_ina219.current_mA;
+
+    //   Xdrv_101_state_motor_stop();
+    //   XDRV_101_motor.act_pos = 0;
+
+    //   AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
+    //   char current[16];
+    //   dtostrfd(curr, 0, current);
+    //   AddLog(LOG_LEVEL_INFO, current);
+    //   dtostrfd(XDRV_101_ina219.max_curr, 0, current);
+    //   AddLog(LOG_LEVEL_INFO, current);
+    //   break;
+    // }
 
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos - ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
@@ -569,21 +574,26 @@ void Xdrv_101_check_state(void)
     }
     break;
   case 8: // go to position opening
-    if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
+    if (XDRV_101_state_check_overcurr())
     {
-      float curr = XDRV_101_ina219.current_mA;
-
-      Xdrv_101_state_motor_stop();
       XDRV_101_motor.act_pos = 100;
-
-      AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
-      char current[16];
-      dtostrfd(curr, 0, current);
-      AddLog(LOG_LEVEL_INFO, current);
-      dtostrfd(XDRV_101_ina219.max_curr, 0, current);
-      AddLog(LOG_LEVEL_INFO, current);
       break;
-    }
+    };
+    // if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
+    // {
+    //   float curr = XDRV_101_ina219.current_mA;
+
+    //   Xdrv_101_state_motor_stop();
+    //   XDRV_101_motor.act_pos = 100;
+
+    //   AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
+    //   char current[16];
+    //   dtostrfd(curr, 0, current);
+    //   AddLog(LOG_LEVEL_INFO, current);
+    //   dtostrfd(XDRV_101_ina219.max_curr, 0, current);
+    //   AddLog(LOG_LEVEL_INFO, current);
+    //   break;
+    // }
 
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos + ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
@@ -609,6 +619,27 @@ void Xdrv_101_check_state(void)
     dtostrfd(XDRV_101_state.state, 0, state);
     AddLog(LOG_LEVEL_INFO, state);
   }
+}
+
+boolean XDRV_101_state_check_overcurr()
+{
+  if (XDRV_101_ina219.current_mA <= XDRV_101_ina219.max_curr)
+  {
+    return false;
+  }
+
+  float curr = XDRV_101_ina219.current_mA;
+
+  Xdrv_101_state_motor_stop();
+
+  AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
+  char current[16];
+  dtostrfd(curr, 0, current);
+  AddLog(LOG_LEVEL_INFO, current);
+  dtostrfd(XDRV_101_ina219.max_curr, 0, current);
+  AddLog(LOG_LEVEL_INFO, current);
+
+  return true;
 }
 
 void Xdrv_101_check_state_1s()
