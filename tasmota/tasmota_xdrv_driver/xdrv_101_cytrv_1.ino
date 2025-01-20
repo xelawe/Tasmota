@@ -708,7 +708,7 @@ void CmdTRVCal(void)
 // Command Position
 void CmdTRVPos()
 {
-  AddLog(LOG_LEVEL_INFO, PSTR("Calling Xdrv_101 Command position ..."));
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Calling Xdrv_101 Command position ... %d"), XdrvMailbox.payload );
   if (XdrvMailbox.payload >= 0)
   {
     XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
@@ -717,10 +717,6 @@ void CmdTRVPos()
   {
     MqttPublishSensor();
   }
-
-  char position[16];
-  dtostrfd(XDRV_101_mqtt.dest_pos, 0, position);
-  AddLog(LOG_LEVEL_INFO, position);
 
   ResponseCmndDone();
 }
