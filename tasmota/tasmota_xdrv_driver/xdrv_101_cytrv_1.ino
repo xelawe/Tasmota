@@ -594,7 +594,9 @@ boolean XDRV_101_state_check_overcurr()
 
   Xdrv_101_state_motor_stop();
 
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f / %.0f) -> stop"), curr, XDRV_101_ina219.max_curr);
+  //AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f) -> stop"), curr);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop %f"), curr);
+  //AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop"));
 
   return true;
 }
@@ -708,7 +710,7 @@ void CmdTRVCal(void)
 // Command Position
 void CmdTRVPos()
 {
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Calling Xdrv_101 Command position ... %d"), XdrvMailbox.payload );
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Calling Xdrv_101 Command position ... %d"), XdrvMailbox.payload);
   if (XdrvMailbox.payload >= 0)
   {
     XDRV_101_mqtt.dest_pos = XdrvMailbox.payload;
