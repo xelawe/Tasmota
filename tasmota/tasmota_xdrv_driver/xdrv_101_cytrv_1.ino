@@ -518,16 +518,16 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
       XDRV_101_motor_start(_CCW, 100);
-      if (XDRV_101_motor.dest_pos == 0)
-      {
-        // close till max current
-        XDRV_101_state.state = 5;
-      }
-      else
-      {
-        // drive to position
-        XDRV_101_state.state = 7;
-      }
+      // if (XDRV_101_motor.dest_pos == 0)
+      // {
+      //   // close till max current
+      //   XDRV_101_state.state = 5;
+      // }
+      // else
+      // {
+      //   // drive to position
+      //   XDRV_101_state.state = 7;
+      // }
     }
     else
     {
@@ -543,7 +543,7 @@ void Xdrv_101_check_state(void)
     // gv_pos_time = gv_max_time - map(gv_dest_pos, 0, 100, gv_max_time, 0);
     break;
   case 7: // go to position closing
-      if (XDRV_101_state_check_overcurr())
+    if (XDRV_101_state_check_overcurr())
     {
       XDRV_101_motor.act_pos = 0;
       break;
@@ -567,10 +567,13 @@ void Xdrv_101_check_state(void)
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos - ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
 
-    if (XDRV_101_motor.act_pos <= XDRV_101_motor.dest_pos)
+    if (XDRV_101_motor.dest_pos != 100)
     {
-      Xdrv_101_state_motor_stop();
-      break;
+      if (XDRV_101_motor.act_pos <= XDRV_101_motor.dest_pos)
+      {
+        Xdrv_101_state_motor_stop();
+        break;
+      }
     }
     break;
   case 8: // go to position opening
@@ -598,10 +601,13 @@ void Xdrv_101_check_state(void)
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos + ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
 
-    if (XDRV_101_motor.act_pos >= XDRV_101_motor.dest_pos)
+    if (XDRV_101_motor.dest_pos != 0)
     {
-      Xdrv_101_state_motor_stop();
-      break;
+      if (XDRV_101_motor.act_pos >= XDRV_101_motor.dest_pos)
+      {
+        Xdrv_101_state_motor_stop();
+        break;
+      }
     }
     break;
   }
