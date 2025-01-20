@@ -595,8 +595,8 @@ boolean XDRV_101_state_check_overcurr()
   Xdrv_101_state_motor_stop();
 
   //AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f) -> stop"), curr);
-  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop %f"), curr);
-  //AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop"));
+  //AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop %f"), curr);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop"));
 
   return true;
 }
