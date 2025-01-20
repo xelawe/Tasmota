@@ -372,15 +372,15 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
   //  ShowSource(source);
   if (dir == _CW)
   {
-    ExecuteCommandPower(1, POWER_ON, SRC_SHUTTER);
-    ExecuteCommandPower(2, POWER_OFF, SRC_SHUTTER);
+    ExecuteCommandPower(1, POWER_ON, SRC_IGNORE);
+    ExecuteCommandPower(2, POWER_OFF, SRC_IGNORE);
   }
   else
   {
-    ExecuteCommandPower(1, POWER_OFF, SRC_SHUTTER);
-    ExecuteCommandPower(2, POWER_ON, SRC_SHUTTER);
+    ExecuteCommandPower(1, POWER_OFF, SRC_IGNORE);
+    ExecuteCommandPower(2, POWER_ON, SRC_IGNORE);
   }
-  TasmotaGlobal.last_source = SRC_SHUTTER;
+  // TasmotaGlobal.last_source = SRC_SHUTTER;
 
 #endif // USE_CYTRV_2
 
@@ -405,12 +405,13 @@ void XDRV_101_motor_stop()
 #endif // USE_CYTRV_1
 
 #ifdef USE_CYTRV_2
-  ExecuteCommandPower(1, POWER_OFF, SRC_SHUTTER);
-  ExecuteCommandPower(2, POWER_OFF, SRC_SHUTTER);
-  TasmotaGlobal.last_source = SRC_SHUTTER;
+  ExecuteCommandPower(1, POWER_OFF, SRC_IGNORE);
+  ExecuteCommandPower(2, POWER_OFF, SRC_IGNORE);
+  // TasmotaGlobal.last_source = SRC_SHUTTER;
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = false;
+  XDRV_101_motor.started = false;
 }
 
 void XDRV_101_init_motor()
@@ -445,7 +446,8 @@ void Xdrv_101_check_state(void)
 
   XDRV_101_state.state_old = XDRV_101_state.state;
 
-  if ((XDRV_101_state.state != 1) && XDRV_101_motor.started == true)
+  //  if ((XDRV_101_state.state != 1) && XDRV_101_motor.started == true)
+  if ((XDRV_101_motor.run == true) && (XDRV_101_motor.started == true))
   {
     Xdrv_101_check_ina219();
   }
@@ -518,16 +520,7 @@ void Xdrv_101_check_state(void)
       XDRV_101_state.dest_millis = XDRV_101_state.old_millis + lv_diff_millis;
 
       XDRV_101_motor_start(_CCW, 100);
-      // if (XDRV_101_motor.dest_pos == 0)
-      // {
-      //   // close till max current
-      //   XDRV_101_state.state = 5;
-      // }
-      // else
-      // {
-      //   // drive to position
-      //   XDRV_101_state.state = 7;
-      // }
+      XDRV_101_state.state = 7;
     }
     else
     {
@@ -548,26 +541,11 @@ void Xdrv_101_check_state(void)
       XDRV_101_motor.act_pos = 0;
       break;
     };
-    // if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
-    // {
-    //   float curr = XDRV_101_ina219.current_mA;
-
-    //   Xdrv_101_state_motor_stop();
-    //   XDRV_101_motor.act_pos = 0;
-
-    //   AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
-    //   char current[16];
-    //   dtostrfd(curr, 0, current);
-    //   AddLog(LOG_LEVEL_INFO, current);
-    //   dtostrfd(XDRV_101_ina219.max_curr, 0, current);
-    //   AddLog(LOG_LEVEL_INFO, current);
-    //   break;
-    // }
 
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos - ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
 
-    if (XDRV_101_motor.dest_pos != 100)
+    if (XDRV_101_motor.dest_pos != 0)
     {
       if (XDRV_101_motor.act_pos <= XDRV_101_motor.dest_pos)
       {
@@ -582,26 +560,11 @@ void Xdrv_101_check_state(void)
       XDRV_101_motor.act_pos = 100;
       break;
     };
-    // if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
-    // {
-    //   float curr = XDRV_101_ina219.current_mA;
-
-    //   Xdrv_101_state_motor_stop();
-    //   XDRV_101_motor.act_pos = 100;
-
-    //   AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
-    //   char current[16];
-    //   dtostrfd(curr, 0, current);
-    //   AddLog(LOG_LEVEL_INFO, current);
-    //   dtostrfd(XDRV_101_ina219.max_curr, 0, current);
-    //   AddLog(LOG_LEVEL_INFO, current);
-    //   break;
-    // }
 
     // aktuelle Position berechnen
     XDRV_101_motor.act_pos = XDRV_101_motor.old_pos + ((100 * (millis() - XDRV_101_state.old_millis)) / (XDRV_101_state.max_time * 1000));
 
-    if (XDRV_101_motor.dest_pos != 0)
+    if (XDRV_101_motor.dest_pos != 100)
     {
       if (XDRV_101_motor.act_pos >= XDRV_101_motor.dest_pos)
       {
@@ -616,14 +579,7 @@ void Xdrv_101_check_state(void)
   {
     XDRV_101_mqtt.pub_sens = true;
 
-    AddLog(LOG_LEVEL_INFO, PSTR("State changed ..."));
-
-    char state[16];
-    dtostrfd(XDRV_101_state.state_old, 0, state);
-    AddLog(LOG_LEVEL_INFO, state);
-    AddLog(LOG_LEVEL_INFO, PSTR(" --> "));
-    dtostrfd(XDRV_101_state.state, 0, state);
-    AddLog(LOG_LEVEL_INFO, state);
+    AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "State changed from %d to %d"), XDRV_101_state.state_old, XDRV_101_state.state);
   }
 }
 
@@ -638,12 +594,7 @@ boolean XDRV_101_state_check_overcurr()
 
   Xdrv_101_state_motor_stop();
 
-  AddLog(LOG_LEVEL_INFO, PSTR("overcurrent -> stop ..."));
-  char current[16];
-  dtostrfd(curr, 0, current);
-  AddLog(LOG_LEVEL_INFO, current);
-  dtostrfd(XDRV_101_ina219.max_curr, 0, current);
-  AddLog(LOG_LEVEL_INFO, current);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f / %.0f) -> stop"), curr, XDRV_101_ina219.max_curr);
 
   return true;
 }
