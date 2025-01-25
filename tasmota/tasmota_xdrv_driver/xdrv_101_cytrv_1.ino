@@ -153,9 +153,6 @@ struct XDRV_101_STATE
 #ifdef USE_CYTRV_1
 
 #include "WEMOS_Motor.h"
-// Motor shield I2C Address: 0x30
-// PWM frequency: 1000Hz(1kHz)
-// Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
 Motor *XDRV_101_Ventil;
 
 #else
@@ -351,6 +348,12 @@ void XDRV_101_show_TRV(bool json)
 //*********************************************************************************************/
 void XDRV_101_motor_start(uint8_t dir, float pwm_val)
 {
+
+  // read INA219 to get actual current before start of motor
+  Xdrv_101_check_ina219();
+  dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
+  AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Motor Start - current: %s"), current);
+
 #ifdef USE_CYTRV_1
   XDRV_101_Ventil->setmotor(dir, pwm_val);
 #endif // USE_CYTRV_1
@@ -384,10 +387,6 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
 
 #endif // USE_CYTRV_2
 
-  XDRV_101_motor.run = true;
-  XDRV_101_motor.starting = false;
-  XDRV_101_motor.started = false;
-
   if (dir == _CW)
   {
     XDRV_101_motor.dir = true;
@@ -396,6 +395,9 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
   {
     XDRV_101_motor.dir = false;
   }
+  XDRV_101_motor.run = true;
+  XDRV_101_motor.starting = false;
+  XDRV_101_motor.started = false;
 }
 
 void XDRV_101_motor_stop()
@@ -407,7 +409,6 @@ void XDRV_101_motor_stop()
 #ifdef USE_CYTRV_2
   ExecuteCommandPower(1, POWER_OFF, SRC_IGNORE);
   ExecuteCommandPower(2, POWER_OFF, SRC_IGNORE);
-  // TasmotaGlobal.last_source = SRC_SHUTTER;
 #endif // USE_CYTRV_2
 
   XDRV_101_motor.run = false;
@@ -417,6 +418,9 @@ void XDRV_101_motor_stop()
 void XDRV_101_init_motor()
 {
 #ifdef USE_CYTRV_1
+  // Motor shield I2C Address: 0x30
+  // PWM frequency: 1000Hz(1kHz)
+  // Motor Pumpe(0x30, _MOTOR_A, 1000); //Motor A
   XDRV_101_Ventil = new Motor(0x30, _MOTOR_B, 1000); // Motor B
   XDRV_101_motor.init = true;
 #endif // USE_CYTRV_1
@@ -594,8 +598,8 @@ boolean XDRV_101_state_check_overcurr()
 
   Xdrv_101_state_motor_stop();
 
-  //AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f) -> stop"), curr);
-  //AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop %f"), curr);
+  // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent (%.0f) -> stop"), curr);
+  // AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop %f"), curr);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "overcurrent -> stop"));
 
   return true;
@@ -656,17 +660,19 @@ bool XDRV_101_initSuccess = false;
     Help       - Prints a list of available commands
 */
 
-const char MyProjectCommands[] PROGMEM = D_cyTRV "|" // No Prefix
-                                                 "Cal|"
-                                                 "Pos|"
-                                                 //                                         "Say_Hello|"
-                                                 //                                         "SendMQTT|"
-                                                 "HELP";
+const char cyTRVCommands[] PROGMEM = D_cyTRV "|" // Prefix
+                                          "Cal|"
+                                          "Pos|"
+                                          //  "Say_Hello|"
+                                          //   "SendMQTT|"
+                                          "HELP";
 
-void (*const MyProjectCommand[])(void) PROGMEM = {
-    &CmdTRVCal, &CmdTRVPos,
-    //    &CmdSay_Hello, &CmdSendMQTT,
-    &CmdHelp};
+void (*const cyTRVCommand[])(void) PROGMEM = {
+                                      &CmdTRVCal, 
+                                      &CmdTRVPos,
+                                      // &CmdSay_Hello, 
+                                      // &CmdSendMQTT,
+                                      &CmdHelp};
 
 /* void CmdSay_Hello(void)
 {
@@ -818,11 +824,29 @@ bool Xdrv101(uint32_t function)
     // Command support
     case FUNC_COMMAND:
       // AddLog(LOG_LEVEL_INFO, PSTR("Calling Command..."));
-      result = DecodeCommand(MyProjectCommands, MyProjectCommand);
+      result = DecodeCommand(cyTRVCommands, cyTRVCommand);
       break;
 
     case FUNC_ACTIVE:
       result = true;
+      break;
+
+    case FUNC_SET_POWER:
+
+      //   // extract the number of the relay that was switched and save for later in Update Position.
+      //   ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
+      //   ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
+      //   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
+      //   save_powermatrix = TasmotaGlobal.power; // can be changed in ShutterRelayChanged
+      //   if (!ShutterGlobal.LastChangedRelay) {
+      //     ShutterGlobal.skip_relay_change = 1;
+      //     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("INVALID REQUEST"));
+      //   } else {
+      //     ShutterRelayChanged();
+      //     ShutterGlobal.RelayOldMask = XdrvMailbox.index; // may be changed and now revert
+      //     TasmotaGlobal.power = save_powermatrix;
+      //   }
+      //   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER end. powermask %d"), TasmotaGlobal.power);
       break;
 
     case FUNC_JSON_APPEND:
