@@ -351,6 +351,7 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
 
   // read INA219 to get actual current before start of motor
   Xdrv_101_check_ina219();
+  char current[16];
   dtostrfd(XDRV_101_ina219.current_mA, Settings->flag2.current_resolution, current);
   AddLog(LOG_LEVEL_INFO, PSTR(D_LOG_LOG "Motor Start - current: %s"), current);
 
@@ -400,6 +401,31 @@ void XDRV_101_motor_start(uint8_t dir, float pwm_val)
   XDRV_101_motor.started = false;
 }
 
+void Xdrv_101_motor_startup()
+{
+  if (!XDRV_101_motor.run)
+  {
+    return;
+  }
+
+  if (XDRV_101_motor.started == true)
+  {
+    return;
+  }
+
+  if (XDRV_101_motor.starting == false)
+  {
+    XDRV_101_motor.starting = true;
+    return;
+  }
+
+  if (XDRV_101_motor.started == false)
+  {
+    XDRV_101_motor.started = true;
+    return;
+  }
+}
+
 void XDRV_101_motor_stop()
 {
 #ifdef USE_CYTRV_1
@@ -415,6 +441,10 @@ void XDRV_101_motor_stop()
   XDRV_101_motor.started = false;
 }
 
+void XDRV_101_motor_stop_all()
+{
+  XDRV_101_motor_stop();
+}
 void XDRV_101_init_motor()
 {
 #ifdef USE_CYTRV_1
@@ -434,11 +464,6 @@ void XDRV_101_init_motor()
 #endif // USE_CYTRV_2
 
   XDRV_101_motor_stop_all();
-}
-
-void XDRV_101_motor_stop_all()
-{
-  XDRV_101_motor_stop();
 }
 
 //*********************************************************************************************/
@@ -661,18 +686,18 @@ bool XDRV_101_initSuccess = false;
 */
 
 const char cyTRVCommands[] PROGMEM = D_cyTRV "|" // Prefix
-                                          "Cal|"
-                                          "Pos|"
-                                          //  "Say_Hello|"
-                                          //   "SendMQTT|"
-                                          "HELP";
+                                             "Cal|"
+                                             "Pos|"
+                                             //  "Say_Hello|"
+                                             //   "SendMQTT|"
+                                             "HELP";
 
 void (*const cyTRVCommand[])(void) PROGMEM = {
-                                      &CmdTRVCal, 
-                                      &CmdTRVPos,
-                                      // &CmdSay_Hello, 
-                                      // &CmdSendMQTT,
-                                      &CmdHelp};
+    &CmdTRVCal,
+    &CmdTRVPos,
+    // &CmdSay_Hello,
+    // &CmdSendMQTT,
+    &CmdHelp};
 
 /* void CmdSay_Hello(void)
 {
@@ -780,7 +805,7 @@ bool Xdrv101(uint32_t function)
 
   bool result = false;
 
-  if (FUNC_INIT == function)
+  if (function == FUNC_INIT)
   {
     XDRV_101_Init();
     AddLog(LOG_LEVEL_DEBUG_MORE, PSTR(D_cyTRV " init is done..."));
@@ -795,28 +820,12 @@ bool Xdrv101(uint32_t function)
       Xdrv_101_check_1s();
 
       //    case FUNC_EVERY_250_MSECOND:
+
     case FUNC_EVERY_200_MSECOND:
-
-      if (XDRV_101_motor.run == true)
-      {
-        if (XDRV_101_motor.started == true)
-        {
-          break;
-        }
-        if (XDRV_101_motor.starting == false)
-        {
-          XDRV_101_motor.starting = true;
-          break;
-        }
-        if (XDRV_101_motor.started == false)
-        {
-          XDRV_101_motor.started = true;
-          break;
-        }
-      }
-
+      Xdrv_101_motor_startup();
       break;
       // case FUNC_EVERY_100_MSECOND:
+
     case FUNC_EVERY_50_MSECOND:
       Xdrv_101_check_state();
       break;
@@ -832,21 +841,7 @@ bool Xdrv101(uint32_t function)
       break;
 
     case FUNC_SET_POWER:
-
-      //   // extract the number of the relay that was switched and save for later in Update Position.
-      //   ShutterGlobal.RelayCurrentMask = XdrvMailbox.index ^ ShutterGlobal.RelayOldMask;
-      //   ShutterGlobal.LastChangedRelay = ShutterGetRelayNoFromBitfield(XdrvMailbox.index ^ ShutterGlobal.RelayOldMask);
-      //   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER Relaymask %d SwitchedRelay:%d by %s, payload %d, powermask %d"), ShutterGlobal.RelayOldMask, ShutterGlobal.LastChangedRelay,GetTextIndexed(stemp1, sizeof(stemp1), TasmotaGlobal.last_source, kCommandSource),XdrvMailbox.payload, TasmotaGlobal.power);
-      //   save_powermatrix = TasmotaGlobal.power; // can be changed in ShutterRelayChanged
-      //   if (!ShutterGlobal.LastChangedRelay) {
-      //     ShutterGlobal.skip_relay_change = 1;
-      //     //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("INVALID REQUEST"));
-      //   } else {
-      //     ShutterRelayChanged();
-      //     ShutterGlobal.RelayOldMask = XdrvMailbox.index; // may be changed and now revert
-      //     TasmotaGlobal.power = save_powermatrix;
-      //   }
-      //   //AddLog(LOG_LEVEL_DEBUG_MORE, PSTR("SHT: FUNC_SET_POWER end. powermask %d"), TasmotaGlobal.power);
+      AddLog(LOG_LEVEL_INFO, PSTR("Calling FUNC_SET_POWER ..."));
       break;
 
     case FUNC_JSON_APPEND:
