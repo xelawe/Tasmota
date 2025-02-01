@@ -146,6 +146,8 @@ struct XDRV_101_STATE
 
 } XDRV_101_state;
 
+const char cyTRVStates[] PROGMEM = "do stop" "stopped" ;
+
 //*********************************************************************************************/
 // Motor decl ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //*********************************************************************************************/
@@ -524,7 +526,7 @@ void Xdrv_101_check_state(void)
 
     break;
 
-  case 5: // (calibration) closing
+  case 5: // calibration closing
     if (XDRV_101_ina219.current_mA > XDRV_101_ina219.max_curr)
     {
       Xdrv_101_state_motor_stop();
