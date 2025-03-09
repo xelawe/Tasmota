@@ -90,6 +90,7 @@ Examples :
 #define USE_CYTRV
 //#define USE_CYTRV_1
 //#define USE_CYSHUTTER_1
+
 #define USE_CYTRV_2
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
