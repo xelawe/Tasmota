@@ -205,28 +205,26 @@ bool ZH03ReadDataPassive() // process the passive mode response of the ZH03x sen
   AddLogBuffer(LOG_LEVEL_DEBUG_MORE, buffer, 9);
  
   uint8_t sum = 0;
-  for (uint32_t i = 1; i < 7; i++) {
+  for (uint32_t i = 1; i < 8; i++) {
     sum += buffer[i];
   }
-  sum=(~sum)+1;
+  sum=~(sum)+1;
   if (sum != buffer[8]) { 
     AddLog(LOG_LEVEL_DEBUG, PSTR("ZH03x: " D_CHECKSUM_FAILURE));
     return false;
   }
-
-  uint16_t buffer_u16[12];
-  for (uint32_t i = 1; i < 4; i++) { 
-    buffer_u16[i] = buffer[i*2 + 1];
-    buffer_u16[i] += (buffer[i*2] << 8);
-    buffer_u16[i+3] = buffer[i*2 + 1];      // Direct and Environment values identical
-    buffer_u16[i+3] += (buffer[i*2] << 8);  // Direct and Environment values identical
-    buffer_u16[0] = 20;                     // set dummy framelength
-    buffer_u16[11] = buffer[8];             // copy checksum
-  }
+ 
+  pms_data.pm10_standard = buffer[6]*256+buffer[7];
+  pms_data.pm10_env = pms_data.pm10_standard;       // Direct and Environment values identical
+  pms_data.pm25_standard = buffer[2]*256+buffer[3];
+  pms_data.pm25_env = pms_data.pm25_standard;       // Direct and Environment values identical
+  pms_data.pm100_standard = buffer[4]*256+buffer[5];
+  pms_data.pm100_env = pms_data.pm100_standard;     // Direct and Environment values identical
+  pms_data.framelen = 20;                           // set dummy framelength
+  pms_data.checksum = buffer[8];                    // copy checksum
   
-    memcpy((void *)&pms_data, (void *)buffer_u16, 22); 
-  
-  Pms.valid = 10;
+ 
+  Pms.valid = Settings->pms_wake_interval*2;
 
   if (!Pms.discovery_triggered) {
     TasmotaGlobal.discovery_counter = 1;      // Force discovery
@@ -390,17 +388,17 @@ int usaEpaStandardPm2d5Adjustment(int pm25_standard, int relative_humidity)
 int compute_us_aqi(int pm25_standard)
 {
   if (pm25_standard <= 9) {
-    return map_double(pm25_standard, 0, 9, 0, 50);
+    return map_float(pm25_standard, 0, 9, 0, 50);
   } else if (pm25_standard <= 35) {
-    return map_double(pm25_standard, 9.1f, 35.4f, 51, 100);
+    return map_float(pm25_standard, 9.1f, 35.4f, 51, 100);
   } else if (pm25_standard <= 55) {
-    return map_double(pm25_standard, 35.5f, 55.4f, 101, 150);
+    return map_float(pm25_standard, 35.5f, 55.4f, 101, 150);
   } else if (pm25_standard <= 125) {
-    return map_double(pm25_standard, 55.5f, 125.4f, 151, 200);
+    return map_float(pm25_standard, 55.5f, 125.4f, 151, 200);
   } else if (pm25_standard <= 225) {
-    return map_double(pm25_standard, 125.5f, 225.4f, 201, 300);
+    return map_float(pm25_standard, 125.5f, 225.4f, 201, 300);
   } else if (pm25_standard <= 325) {
-    return map_double(pm25_standard, 225.5f, 325.4f, 301, 500);
+    return map_float(pm25_standard, 225.5f, 325.4f, 301, 500);
   } else {
     return 500;
   }
