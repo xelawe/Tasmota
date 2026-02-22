@@ -87,10 +87,12 @@ Examples :
 // !!! Remember that your changes GOES AT THE BOTTOM OF THIS FILE right before the last #endif !!!
 */
 
-#define USE_CYTRV
+//#define USE_CYTRV
 //#define USE_CYTRV_1
 //#define USE_CYSHUTTER_1
 
-#define USE_CYTRV_2
+//#define USE_CYTRV_2
+
+#define USE_WINDMETER
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
