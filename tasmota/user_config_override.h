@@ -93,6 +93,9 @@ Examples :
 
 //#define USE_CYTRV_2
 
-#define USE_WINDMETER
+// Add support for analog anemometer (+2k2 code)
+#ifndef USE_WINDMETER
+#define USE_WINDMETER       
+#endif
 
 #endif  // _USER_CONFIG_OVERRIDE_H_
